@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TravelBharat — Explore India, State by State</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1E2A45; --ink-soft:#4A5568;
+    --paper:#F4EFE0; --paper-raised:#FBF8EF;
+    --line:rgba(30,42,69,0.16); --line-strong:rgba(30,42,69,0.32);
+    --gold:#A9782F; --gold-bg:#EFE3C4;
+    --teal:#276358; --teal-bg:#DCEAE5;
+    --maroon:#8B3140; --maroon-bg:#F0DEDF;
+    --slate:#3D5A80; --slate-bg:#DEE6EF;
+    --shadow-none: none;
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme: dark){
+      --ink:#EDE7D6; --ink-soft:#B9B3A0;
+      --paper:#14171F; --paper-raised:#1B1F2A;
+      --line:rgba(237,231,214,0.16); --line-strong:rgba(237,231,214,0.32);
+      --gold:#D9B872; --gold-bg:#3A3220;
+      --teal:#7FBBAC; --teal-bg:#1E332D;
+      --maroon:#D98A94; --maroon-bg:#3A2226;
+      --slate:#9CB6D9; --slate-bg:#212D3F;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#EDE7D6; --ink-soft:#B9B3A0;
+    --paper:#14171F; --paper-raised:#1B1F2A;
+    --line:rgba(237,231,214,0.16); --line-strong:rgba(237,231,214,0.32);
+    --gold:#D9B872; --gold-bg:#3A3220;
+    --teal:#7FBBAC; --teal-bg:#1E332D;
+    --maroon:#D98A94; --maroon-bg:#3A2226;
+    --slate:#9CB6D9; --slate-bg:#212D3F;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:'Work Sans',sans-serif; font-size:16px; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.serif{font-family:'Fraunces',serif;}
+  a{color:inherit;}
+  ::selection{background:var(--gold-bg);}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 28px;}
+
+  /* header */
+  header{
+    position:sticky; top:0; z-index:40; background:var(--paper);
+    border-bottom:1px solid var(--line);
+  }
+  header .bar{display:flex;align-items:center;justify-content:space-between;padding:20px 0;gap:24px;}
+  .wordmark{font-family:'Fraunces',serif;font-size:22px;font-weight:600;letter-spacing:-0.01em;cursor:pointer;white-space:nowrap;}
+  .wordmark span{color:var(--gold);}
+  .search-shell{position:relative;flex:1;max-width:380px;}
+  .search-shell input{
+    width:100%; padding:10px 14px; border:1px solid var(--line-strong); border-radius:2px;
+    background:var(--paper-raised); color:var(--ink); font-family:'Work Sans',sans-serif; font-size:14px;
+  }
+  .search-shell input:focus{outline:none;border-color:var(--gold);}
+  .search-results{
+    position:absolute; top:calc(100% + 6px); left:0; right:0; background:var(--paper-raised);
+    border:1px solid var(--line-strong); max-height:360px; overflow-y:auto; display:none; z-index:50;
+  }
+  .search-results.open{display:block;}
+  .search-results .sr-item{padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer;font-size:14px;}
+  .search-results .sr-item:last-child{border-bottom:none;}
+  .search-results .sr-item:hover{background:var(--gold-bg);}
+  .search-results .sr-item small{display:block;color:var(--ink-soft);font-size:12px;margin-top:2px;}
+  .search-empty{padding:14px;font-size:13px;color:var(--ink-soft);}
+
+  /* hero */
+  .hero{background:var(--ink);color:var(--paper);padding:76px 0 64px;position:relative;overflow:hidden;}
+  .hero .wrap{position:relative;z-index:2;}
+  .hero h1{font-size:clamp(32px,5vw,54px);font-weight:500;line-height:1.08;max-width:760px;margin:0 0 22px;}
+  .hero p{max-width:520px;font-size:17px;color:rgba(244,239,224,0.78);margin:0 0 30px;}
+  .hero-motif{position:absolute;right:-60px;top:-40px;width:420px;height:420px;opacity:0.14;z-index:1;}
+  .region-jump{display:flex;flex-wrap:wrap;gap:10px;}
+  .region-jump button{
+    background:transparent;border:1px solid rgba(244,239,224,0.34);color:var(--paper);
+    padding:8px 16px;border-radius:2px;font-family:'Work Sans',sans-serif;font-size:13px;cursor:pointer;
+  }
+  .region-jump button:hover{border-color:var(--gold);color:var(--gold);}
+
+  /* region sections */
+  .region-block{padding:52px 0;border-bottom:1px solid var(--line);}
+  .region-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:26px;gap:16px;flex-wrap:wrap;}
+  .region-head h2{font-size:26px;font-weight:500;margin:0;}
+  .region-head p{margin:0;color:var(--ink-soft);font-size:14px;max-width:400px;}
+  .state-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);}
+  .state-tile{background:var(--paper);padding:22px 20px;cursor:pointer;transition:background .15s ease;}
+  .state-tile:hover{background:var(--paper-raised);}
+  .state-tile .rule{width:32px;height:3px;background:var(--gold);margin-bottom:14px;}
+  .state-tile h3{font-size:19px;font-weight:500;margin:0 0 4px;}
+  .state-tile .cap{font-size:12.5px;color:var(--ink-soft);margin-bottom:10px;}
+  .state-tile .tag{font-size:13.5px;color:var(--ink-soft);line-height:1.45;}
+
+  /* state view */
+  .state-view{display:none;padding:48px 0 80px;}
+  .state-view.active{display:block;}
+  .back-link{background:none;border:none;color:var(--ink-soft);font-family:'Work Sans',sans-serif;font-size:13.5px;cursor:pointer;padding:0;margin-bottom:28px;display:inline-flex;align-items:center;gap:6px;}
+  .back-link:hover{color:var(--gold);}
+  .state-header h2{font-size:36px;font-weight:500;margin:0 0 8px;}
+  .state-meta{color:var(--ink-soft);font-size:14px;margin-bottom:14px;}
+  .state-desc{max-width:640px;font-size:15.5px;color:var(--ink-soft);margin-bottom:32px;}
+  .chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px;}
+  .chip{
+    border:1px solid var(--line-strong);padding:7px 14px;border-radius:20px;font-size:13px;cursor:pointer;
+    background:transparent;color:var(--ink);font-family:'Work Sans',sans-serif;
+  }
+  .chip.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .place-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;}
+  .place-card{border-top:3px solid var(--cat-color,var(--gold));background:var(--paper-raised);padding:20px;cursor:pointer;}
+  .place-card:hover{outline:1px solid var(--line-strong);}
+  .place-card .cat-label{font-size:11.5px;color:var(--cat-color,var(--gold));margin-bottom:10px;font-weight:600;}
+  .place-card h4{font-family:'Fraunces',serif;font-size:19px;font-weight:500;margin:0 0 8px;}
+  .place-card p{font-size:13.5px;color:var(--ink-soft);margin:0;line-height:1.5;}
+
+  /* modal */
+  .modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(20,23,31,0.6);z-index:100;
+    align-items:flex-start;justify-content:center;overflow-y:auto;padding:48px 20px;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    background:var(--paper);max-width:640px;width:100%;padding:40px;position:relative;
+    border-top:4px solid var(--cat-color,var(--gold));
+  }
+  .modal-close{position:absolute;top:18px;right:18px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink-soft);line-height:1;}
+  .modal .cat-label{font-size:12px;font-weight:600;color:var(--cat-color,var(--gold));margin-bottom:10px;}
+  .modal h3{font-size:30px;font-weight:500;margin:0 0 6px;}
+  .modal .loc-line{color:var(--ink-soft);font-size:14px;margin-bottom:22px;}
+  .modal p.desc{font-size:15px;color:var(--ink-soft);margin-bottom:22px;}
+  .fact-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 24px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:20px 0;margin-bottom:24px;}
+  .fact{font-size:13.5px;}
+  .fact .k{color:var(--ink-soft);margin-bottom:3px;font-size:12px;}
+  .fact .v{font-weight:500;}
+  .map-btn{
+    display:inline-block;background:var(--ink);color:var(--paper);text-decoration:none;
+    padding:10px 20px;font-size:13.5px;border-radius:2px;margin-bottom:24px;
+  }
+  .nearby{border-top:1px solid var(--line);padding-top:18px;}
+  .nearby .k{font-size:12px;color:var(--ink-soft);margin-bottom:10px;}
+  .nearby-item{font-size:14px;padding:6px 0;cursor:pointer;}
+  .nearby-item:hover{color:var(--gold);}
+
+  footer{border-top:1px solid var(--line);padding:36px 0;color:var(--ink-soft);font-size:13px;text-align:center;}
+
+  @media(max-width:640px){
+    .fact-grid{grid-template-columns:1fr;}
+    .hero{padding:56px 0 48px;}
+    .modal{padding:28px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <div class="wordmark" onclick="goHome()">Travel<span>Bharat</span></div>
+    <div class="search-shell">
+      <input id="searchInput" type="text" placeholder="Search a place, state, or category" autocomplete="off">
+      <div class="search-results" id="searchResults"></div>
+    </div>
+  </div>
+</header>
+
+<section class="hero" id="homeHero">
+  <svg class="hero-motif" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="100" cy="100" r="98" fill="none" stroke="#F4EFE0" stroke-width="0.6"/>
+    <circle cx="100" cy="100" r="76" fill="none" stroke="#F4EFE0" stroke-width="0.6"/>
+    <circle cx="100" cy="100" r="54" fill="none" stroke="#F4EFE0" stroke-width="0.6"/>
+    <path d="M100 24 L100 176 M24 100 L176 100" stroke="#F4EFE0" stroke-width="0.6"/>
+  </svg>
+  <div class="wrap">
+    <h1>Twenty-eight states, eight union territories, one country worth reading slowly.</h1>
+    <p>A field guide to India's tourist places — organised the way the land actually breaks apart, from Ladakh's passes to Kerala's backwaters.</p>
+    <div class="region-jump" id="regionJump"></div>
+  </div>
+</section>
+
+<main class="wrap" id="regionsWrap"></main>
+
+<div class="state-view" id="stateView"></div>
+
+<footer>TravelBharat — a state-wise directory of Indian tourist places, built for travellers, students, and the curious.</footer>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalBody"></div>
+</div>
+
+<script>
+const DATA = {
+  regions: [
+    { key:"north", name:"North", blurb:"Himalayan passes, Mughal capitals, desert forts." },
+    { key:"west", name:"West", blurb:"Coastline, salt flats, and the Deccan trap hills." },
+    { key:"south", name:"South", blurb:"Temple towns, hill stations, backwaters." },
+    { key:"east", name:"East", blurb:"River deltas, tribal heartlands, colonial ports." },
+    { key:"northeast", name:"Northeast", blurb:"Living root bridges and cloud forests." },
+    { key:"central", name:"Central", blurb:"Sandstone temples and tiger forests." }
+  ],
+  categories: {
+    heritage:{label:"Heritage", color:"var(--gold)"},
+    nature:{label:"Nature", color:"var(--teal)"},
+    religious:{label:"Religious", color:"var(--maroon)"},
+    adventure:{label:"Adventure", color:"var(--slate)"}
+  },
+  states: [
+    { slug:"rajasthan", name:"Rajasthan", region:"north", capital:"Jaipur", tagline:"Desert forts, painted cities, and the Thar's open horizon.",
+      places:[
+        {name:"Amber Fort", category:"heritage", desc:"A hilltop fort of pale sandstone and marble above Maota Lake, built by the Kachwaha Rajputs and famed for its mirrored Sheesh Mahal.", history:"Construction began in 1592 under Raja Man Singh I and continued for generations under successive rulers.", best:"October to March", fee:"₹100 (Indians), ₹500 (foreign nationals)", timings:"8:00 AM – 5:30 PM", map:"Amber Fort, Jaipur"},
+        {name:"Jaisalmer Fort", category:"heritage", desc:"A living fort of golden sandstone rising from the Thar Desert, still home to families, shops, and havelis within its walls.", history:"Built in 1156 by the Bhati Rajput ruler Rawal Jaisal, one of the few 'living forts' left in India.", best:"November to February", fee:"Free to enter; museum ₹100", timings:"Open all day; museum 9:00 AM – 6:00 PM", map:"Jaisalmer Fort, Rajasthan"},
+        {name:"Thar Desert Safari, Sam Dunes", category:"adventure", desc:"Rolling golden dunes outside Jaisalmer where camel and jeep safaris cross the sand at sunset.", history:"Part of the Thar, one of the world's most densely populated deserts, long crossed by camel caravans on the old trade routes.", best:"October to February", fee:"Safari packages from ₹500", timings:"Best at sunrise or sunset", map:"Sam Sand Dunes, Jaisalmer"}
+      ]},
+    { slug:"uttar-pradesh", name:"Uttar Pradesh", region:"north", capital:"Lucknow", tagline:"The Ganga plain's temple towns and the Taj at its centre.",
+      places:[
+        {name:"Taj Mahal", category:"heritage", desc:"A white marble mausoleum on the Yamuna's bank, built by Shah Jahan for his wife Mumtaz Mahal and inlaid with semi-precious stone.", history:"Construction ran from 1632 to 1653, employing an estimated 20,000 artisans; a UNESCO World Heritage Site since 1983.", best:"October to March, at sunrise", fee:"₹50 (Indians), ₹1,100 (foreign nationals)", timings:"Sunrise to sunset, closed Fridays", map:"Taj Mahal, Agra"},
+        {name:"Varanasi Ghats", category:"religious", desc:"A string of stone steps along the Ganga where pilgrims bathe at dawn and cremation fires burn through the night.", history:"Regarded as one of the oldest continuously inhabited cities in the world and central to Hindu pilgrimage for millennia.", best:"October to March", fee:"Free; boat rides from ₹200", timings:"Ganga Aarti at Dashashwamedh Ghat, 6:45 PM daily", map:"Dashashwamedh Ghat, Varanasi"}
+      ]},
+    { slug:"himachal-pradesh", name:"Himachal Pradesh", region:"north", capital:"Shimla", tagline:"Colonial hill towns giving way to high Himalayan valleys.",
+      places:[
+        {name:"Spiti Valley", category:"adventure", desc:"A cold desert valley of monasteries and switchback roads, sitting in the rain shadow of the Himalayas near the Tibetan border.", history:"Historically a Buddhist kingdom linked to Ladakh and Tibet, with monasteries dating back over a thousand years.", best:"June to September (roads open)", fee:"Inner Line Permit required for some areas", timings:"Best travelled in daylight due to mountain roads", map:"Spiti Valley, Himachal Pradesh"},
+        {name:"Rohtang Pass", category:"nature", desc:"A high mountain pass near Manali offering snowfields even in summer, gateway to Lahaul and Spiti.", history:"Long used as a trade route between Kullu, Lahaul, and Spiti before modern tunnels reduced the crossing.", best:"May to October", fee:"Permit and vehicle fee apply", timings:"9:00 AM – 4:00 PM (weather permitting)", map:"Rohtang Pass, Manali"}
+      ]},
+    { slug:"delhi", name:"Delhi", region:"north", capital:"—", tagline:"Seven historic cities layered into one union territory.",
+      places:[
+        {name:"Humayun's Tomb", category:"heritage", desc:"A red sandstone and white marble tomb set in a formal Persian charbagh garden, precursor in style to the Taj Mahal.", history:"Commissioned in 1569 by Humayun's widow Bega Begum, the first garden-tomb on the Indian subcontinent.", best:"October to March", fee:"₹35 (Indians), ₹550 (foreign nationals)", timings:"6:00 AM – 6:00 PM", map:"Humayun's Tomb, Delhi"},
+        {name:"Qutub Minar", category:"heritage", desc:"A 73-metre tapering tower of fluted red sandstone and marble, the tallest brick minaret in the world.", history:"Construction began in 1192 under Qutb-ud-din Aibak, completed by his successors over the following century.", best:"October to March", fee:"₹35 (Indians), ₹550 (foreign nationals)", timings:"7:00 AM – 5:00 PM", map:"Qutub Minar, Delhi"}
+      ]},
+    { slug:"jammu-kashmir", name:"Jammu & Kashmir", region:"north", capital:"Srinagar (summer)", tagline:"Alpine lakes and meadows framed by the Pir Panjal.",
+      places:[
+        {name:"Dal Lake", category:"nature", desc:"A lake ringed by the Zabarwan hills, dotted with houseboats and floating vegetable gardens.", history:"Long the centrepiece of Srinagar's Mughal-era gardens, several of which still line its shores.", best:"March to October", fee:"Shikara rides from ₹300", timings:"Best at sunrise for the floating market", map:"Dal Lake, Srinagar"},
+        {name:"Gulmarg", category:"adventure", desc:"A meadow town turned ski resort, home to one of the world's highest cable cars, the Gulmarg Gondola.", history:"Developed as a summer retreat under British rule; the name means 'meadow of flowers' in Kashmiri.", best:"December to February (skiing); April to June (meadows)", fee:"Gondola from ₹740", timings:"9:00 AM – 5:00 PM", map:"Gulmarg, Kashmir"}
+      ]},
+    { slug:"maharashtra", name:"Maharashtra", region:"west", capital:"Mumbai", tagline:"Deccan cave temples, hill forts, and a restless coast.",
+      places:[
+        {name:"Ajanta Caves", category:"heritage", desc:"Thirty rock-cut Buddhist caves carved into a horseshoe gorge, holding some of India's finest surviving ancient paintings.", history:"Excavated in two phases, roughly 2nd century BCE and 5th century CE, then rediscovered by a British officer in 1819.", best:"November to March", fee:"₹40 (Indians), ₹600 (foreign nationals)", timings:"9:00 AM – 5:00 PM, closed Mondays", map:"Ajanta Caves, Maharashtra"},
+        {name:"Ellora Caves", category:"religious", desc:"Thirty-four caves cut side by side for Buddhist, Hindu, and Jain worship, centred on the monolithic Kailasa temple.", history:"Carved between the 6th and 10th centuries CE, with Kailasa temple hewn from a single rock face.", best:"November to March", fee:"₹40 (Indians), ₹600 (foreign nationals)", timings:"6:00 AM – 6:00 PM, closed Tuesdays", map:"Ellora Caves, Maharashtra"}
+      ]},
+    { slug:"gujarat", name:"Gujarat", region:"west", capital:"Gandhinagar", tagline:"Salt desert, lion sanctuary, and stepwell architecture.",
+      places:[
+        {name:"Rann of Kutch", category:"nature", desc:"A vast white salt desert that floods seasonally, hosting the Rann Utsav festival under full moon skies.", history:"One of the largest salt deserts on earth, home to the Banni grasslands and Kutchi craft villages nearby.", best:"November to February", fee:"Free; festival tent packages vary", timings:"Best visited around the full moon", map:"White Rann of Kutch, Gujarat"},
+        {name:"Gir National Park", category:"nature", desc:"The last wild home of the Asiatic lion, a dry deciduous forest across Gujarat's Saurashtra region.", history:"Protected since 1965; conservation efforts brought the lion population back from under 200 to over 600 today.", best:"December to March", fee:"Safari permits from ₹800", timings:"Closed mid-June to mid-October (monsoon)", map:"Gir National Park, Gujarat"}
+      ]},
+    { slug:"goa", name:"Goa", region:"west", capital:"Panaji", tagline:"Portuguese churches, laterite forts, and a long Arabian Sea coast.",
+      places:[
+        {name:"Basilica of Bom Jesus", category:"religious", desc:"A baroque church in Old Goa holding the mortal remains of St. Francis Xavier in a silver casket.", history:"Completed in 1605 under Portuguese rule, a UNESCO World Heritage Site since 1986.", best:"November to February", fee:"Free", timings:"9:00 AM – 6:30 PM", map:"Basilica of Bom Jesus, Old Goa"},
+        {name:"Palolem Beach", category:"nature", desc:"A crescent bay of calm water and coconut palms in South Goa, quieter than the northern beach strip.", history:"Grew from a fishing village into a low-rise beach destination favoured for its shape and shallow water.", best:"November to March", fee:"Free", timings:"Open all day", map:"Palolem Beach, Goa"}
+      ]},
+    { slug:"kerala", name:"Kerala", region:"south", capital:"Thiruvananthapuram", tagline:"Backwaters, tea hills, and a coastline of old spice ports.",
+      places:[
+        {name:"Alleppey Backwaters", category:"nature", desc:"A network of lagoons and canals threaded through coconut groves, best seen from a converted rice-barge houseboat.", history:"The waterways once carried rice and coir cargo before becoming Kerala's signature tourist experience.", best:"September to March", fee:"Houseboat stays from ₹6,000/night", timings:"Overnight cruises typically depart noon", map:"Alleppey Backwaters, Kerala"},
+        {name:"Munnar", category:"nature", desc:"Rolling tea estates and misted peaks in the Western Ghats, at the meeting point of three mountain streams.", history:"Developed as a hill station and tea-planting centre by British planters in the late 19th century.", best:"September to March", fee:"Tea museum entry ₹150", timings:"Best light in early morning", map:"Munnar, Kerala"}
+      ]},
+    { slug:"tamil-nadu", name:"Tamil Nadu", region:"south", capital:"Chennai", tagline:"Dravidian temple towers and a long classical coastline.",
+      places:[
+        {name:"Meenakshi Amman Temple", category:"religious", desc:"A Dravidian temple complex in Madurai with towering, sculpture-covered gopurams dedicated to Meenakshi and Sundareswarar.", history:"The present structure dates largely to the 14th–17th centuries, though the site's worship traces back much earlier.", best:"October to March", fee:"Free; camera fee applies", timings:"5:00 AM – 12:30 PM, 4:00 PM – 9:30 PM", map:"Meenakshi Amman Temple, Madurai"},
+        {name:"Mahabalipuram Shore Temple", category:"heritage", desc:"A granite temple standing directly against the surf, part of a wider group of rock-cut monuments on the Coromandel coast.", history:"Built under the Pallava dynasty in the 8th century CE; a UNESCO World Heritage Site.", best:"November to February", fee:"₹40 (Indians), ₹600 (foreign nationals)", timings:"6:00 AM – 6:00 PM", map:"Shore Temple, Mahabalipuram"}
+      ]},
+    { slug:"karnataka", name:"Karnataka", region:"south", capital:"Bengaluru", tagline:"Ruined empires and coffee hills across the Deccan plateau.",
+      places:[
+        {name:"Hampi", category:"heritage", desc:"A boulder-strewn landscape of temples and ruined royal enclosures, once the capital of the Vijayanagara Empire.", history:"Flourished in the 14th–16th centuries as one of the largest cities in the world before its sack in 1565.", best:"October to February", fee:"₹40 (Indians), ₹600 (foreign nationals)", timings:"6:00 AM – 6:00 PM", map:"Hampi, Karnataka"},
+        {name:"Coorg (Kodagu)", category:"nature", desc:"Coffee-covered hills and misty ridgelines in Karnataka's Western Ghats, known as the Scotland of India.", history:"Home to the Kodava people, with a distinct martial and agrarian culture predating colonial coffee planting.", best:"October to March", fee:"Free; estate tours vary", timings:"Open all day", map:"Coorg, Karnataka"}
+      ]},
+    { slug:"telangana", name:"Telangana", region:"south", capital:"Hyderabad", tagline:"Qutb Shahi forts and pearl-trading bazaars.",
+      places:[
+        {name:"Golconda Fort", category:"heritage", desc:"A hilltop fortress once the centre of the diamond trade, famed for an acoustic system that carries sound across the complex.", history:"Built up over centuries by the Qutb Shahi dynasty from the 16th century, on earlier Kakatiya foundations.", best:"November to February", fee:"₹25 (Indians), ₹300 (foreign nationals)", timings:"9:00 AM – 5:30 PM", map:"Golconda Fort, Hyderabad"}
+      ]},
+    { slug:"west-bengal", name:"West Bengal", region:"east", capital:"Kolkata", tagline:"Colonial river ports and the Sundarbans delta.",
+      places:[
+        {name:"Sundarbans National Park", category:"nature", desc:"The world's largest mangrove forest, straddling the Ganga delta and home to the Bengal tiger.", history:"Declared a national park in 1984 and a UNESCO World Heritage Site, shared across the India-Bangladesh border.", best:"November to February", fee:"Permit and boat safari from ₹1,500", timings:"Day safaris depart early morning", map:"Sundarbans National Park, West Bengal"},
+        {name:"Victoria Memorial", category:"heritage", desc:"A white marble monument and museum in Kolkata, built in memory of Queen Victoria and set in wide formal gardens.", history:"Completed in 1921 after being commissioned by Lord Curzon in 1901, blending British and Mughal architectural styles.", best:"October to March", fee:"₹30 (Indians), ₹500 (foreign nationals)", timings:"10:00 AM – 5:00 PM, closed Mondays", map:"Victoria Memorial, Kolkata"}
+      ]},
+    { slug:"odisha", name:"Odisha", region:"east", capital:"Bhubaneswar", tagline:"Sun temples, sea coast, and Jagannath's chariots.",
+      places:[
+        {name:"Konark Sun Temple", category:"heritage", desc:"A 13th-century temple shaped as a colossal stone chariot with carved wheels, dedicated to the sun god Surya.", history:"Built around 1250 CE under King Narasimhadeva I; a UNESCO World Heritage Site since 1984.", best:"October to February", fee:"₹40 (Indians), ₹600 (foreign nationals)", timings:"6:00 AM – 8:00 PM", map:"Konark Sun Temple, Odisha"}
+      ]},
+    { slug:"meghalaya", name:"Meghalaya", region:"northeast", capital:"Shillong", tagline:"Living root bridges under some of the world's heaviest rainfall.",
+      places:[
+        {name:"Double Decker Living Root Bridge", category:"nature", desc:"A bridge of two stacked, still-growing rubber-tree roots trained across a gorge by the Khasi people, near Cherrapunji.", history:"Root bridges take 15–20 years to grow and can last for centuries, a Khasi engineering tradition generations old.", best:"October to April", fee:"Village entry fee ~₹50", timings:"Trek best started early morning", map:"Double Decker Root Bridge, Nongriat"},
+        {name:"Cherrapunji (Sohra)", category:"nature", desc:"A plateau town among the wettest inhabited places on earth, with waterfalls that surge in the monsoon.", history:"Long held the world rainfall record before neighbouring Mawsynram took the title.", best:"October to April for clear views", fee:"Waterfall viewpoints ~₹20", timings:"Open all day", map:"Cherrapunji, Meghalaya"}
+      ]},
+    { slug:"assam", name:"Assam", region:"northeast", capital:"Dispur", tagline:"Brahmaputra grasslands and the last one-horned rhinos.",
+      places:[
+        {name:"Kaziranga National Park", category:"nature", desc:"Floodplain grasslands along the Brahmaputra holding the largest population of the greater one-horned rhinoceros.", history:"Established in 1905 at the urging of Mary Curzon; a UNESCO World Heritage Site since 1985.", best:"November to April", fee:"Safari permits from ₹900", timings:"Closed May to October (monsoon)", map:"Kaziranga National Park, Assam"}
+      ]},
+    { slug:"madhya-pradesh", name:"Madhya Pradesh", region:"central", capital:"Bhopal", tagline:"Sandstone temple towns and central India's tiger forests.",
+      places:[
+        {name:"Khajuraho Group of Monuments", category:"religious", desc:"Sandstone temples covered in intricate sculpture, built by the Chandela dynasty across a wide temple town.", history:"Constructed mostly between 950 and 1050 CE; only about 20 of an original 85 temples survive.", best:"October to March", fee:"₹40 (Indians), ₹600 (foreign nationals)", timings:"Dawn to dusk", map:"Khajuraho Temples, Madhya Pradesh"},
+        {name:"Bandhavgarh National Park", category:"nature", desc:"Dense sal forest and rocky ridges holding one of India's highest densities of Bengal tigers.", history:"Once the hunting reserve of the Maharajas of Rewa before becoming a national park in 1968.", best:"November to April", fee:"Safari permits from ₹1,000", timings:"Closed July to September (monsoon)", map:"Bandhavgarh National Park, Madhya Pradesh"}
+      ]}
+  ]
+};
+
+function catColor(cat){ return DATA.categories[cat] ? DATA.categories[cat].color : "var(--gold)"; }
+function catLabel(cat){ return DATA.categories[cat] ? DATA.categories[cat].label : cat; }
+
+function renderRegionJump(){
+  const el = document.getElementById('regionJump');
+  el.innerHTML = DATA.regions.map(r => `<button onclick="scrollToRegion('${r.key}')">${r.name}</button>`).join('');
+}
+
+function renderRegions(){
+  const wrap = document.getElementById('regionsWrap');
+  wrap.innerHTML = DATA.regions.map(r => {
+    const states = DATA.states.filter(s => s.region === r.key);
+    if(!states.length) return '';
+    const tiles = states.map(s => `
+      <div class="state-tile" onclick="openState('${s.slug}')">
+        <div class="rule"></div>
+        <h3>${s.name}</h3>
+        <div class="cap">${s.capital}</div>
+        <div class="tag">${s.tagline}</div>
+      </div>`).join('');
+    return `
+      <div class="region-block" id="region-${r.key}">
+        <div class="region-head">
+          <h2>${r.name}</h2>
+          <p>${r.blurb}</p>
+        </div>
+        <div class="state-grid">${tiles}</div>
+      </div>`;
+  }).join('');
+}
+
+function scrollToRegion(key){
+  goHome();
+  requestAnimationFrame(()=>{
+    document.getElementById('region-'+key).scrollIntoView({behavior:'smooth', block:'start'});
+  });
+}
+
+function goHome(){
+  document.getElementById('stateView').classList.remove('active');
+  document.getElementById('homeHero').style.display = '';
+  document.getElementById('regionsWrap').style.display = '';
+  closeModal();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+let currentStateSlug = null;
+let activeFilter = 'all';
+
+function openState(slug){
+  const state = DATA.states.find(s => s.slug === slug);
+  if(!state) return;
+  currentStateSlug = slug;
+  activeFilter = 'all';
+  document.getElementById('homeHero').style.display = 'none';
+  document.getElementById('regionsWrap').style.display = 'none';
+  const view = document.getElementById('stateView');
+  view.classList.add('active');
+  renderStateView(state);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function renderStateView(state){
+  const view = document.getElementById('stateView');
+  const cats = [...new Set(state.places.map(p => p.category))];
+  const chips = ['all', ...cats].map(c => `
+    <button class="chip ${c===activeFilter?'active':''}" onclick="setFilter('${c}')">${c==='all'?'All places':catLabel(c)}</button>
+  `).join('');
+  view.innerHTML = `
+    <div class="wrap">
+      <button class="back-link" onclick="goHome()">&larr; All states</button>
+      <div class="state-header">
+        <h2>${state.name}</h2>
+        <div class="state-meta">Capital: ${state.capital} &middot; ${DATA.regions.find(r=>r.key===state.region).name} India</div>
+        <p class="state-desc">${state.tagline}</p>
+      </div>
+      <div class="chip-row" id="chipRow">${chips}</div>
+      <div class="place-list" id="placeList"></div>
+    </div>
+  `;
+  renderPlaces(state);
+}
+
+function setFilter(cat){
+  activeFilter = cat;
+  const state = DATA.states.find(s => s.slug === currentStateSlug);
+  renderStateView(state);
+}
+
+function renderPlaces(state){
+  const list = document.getElementById('placeList');
+  const places = state.places.filter(p => activeFilter==='all' || p.category===activeFilter);
+  list.innerHTML = places.map((p,i) => `
+    <div class="place-card" style="--cat-color:${catColor(p.category)}" onclick="openPlace('${state.slug}', ${state.places.indexOf(p)})">
+      <div class="cat-label">${catLabel(p.category)}</div>
+      <h4>${p.name}</h4>
+      <p>${p.desc}</p>
+    </div>
+  `).join('');
+}
+
+function openPlace(stateSlug, idx){
+  const state = DATA.states.find(s => s.slug === stateSlug);
+  const p = state.places[idx];
+  const overlay = document.getElementById('modalOverlay');
+  const nearby = state.places.filter((x,i) => i !== idx).slice(0,3);
+  document.getElementById('modalBody').style.setProperty('--cat-color', catColor(p.category));
+  document.getElementById('modalBody').innerHTML = `
+    <button class="modal-close" onclick="closeModal()" aria-label="Close">&times;</button>
+    <div class="cat-label">${catLabel(p.category)}</div>
+    <h3>${p.name}</h3>
+    <div class="loc-line">${state.name}</div>
+    <p class="desc">${p.desc}</p>
+    <p class="desc">${p.history}</p>
+    <div class="fact-grid">
+      <div class="fact"><div class="k">Best time to visit</div><div class="v">${p.best}</div></div>
+      <div class="fact"><div class="k">Entry fee</div><div class="v">${p.fee}</div></div>
+      <div class="fact"><div class="k">Timings</div><div class="v">${p.timings}</div></div>
+      <div class="fact"><div class="k">State</div><div class="v">${state.name}</div></div>
+    </div>
+    <a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.map)}" target="_blank" rel="noopener">View on map</a>
+    ${nearby.length ? `<div class="nearby">
+      <div class="k">Nearby in ${state.name}</div>
+      ${nearby.map(n => `<div class="nearby-item" onclick="openPlace('${state.slug}', ${state.places.indexOf(n)})">${n.name}</div>`).join('')}
+    </div>` : ''}
+  `;
+  overlay.classList.add('open');
+}
+
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+document.getElementById('modalOverlay').addEventListener('click', (e) => {
+  if(e.target.id === 'modalOverlay') closeModal();
+});
+
+/* search */
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+
+function buildSearchIndex(){
+  const idx = [];
+  DATA.states.forEach(s => {
+    idx.push({type:'state', label:s.name, sub:s.capital, slug:s.slug});
+    s.places.forEach((p, i) => {
+      idx.push({type:'place', label:p.name, sub:`${s.name} · ${catLabel(p.category)}`, slug:s.slug, idx:i});
+    });
+  });
+  return idx;
+}
+const SEARCH_INDEX = buildSearchIndex();
+
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.trim().toLowerCase();
+  if(!q){ searchResults.classList.remove('open'); return; }
+  const matches = SEARCH_INDEX.filter(item =>
+    item.label.toLowerCase().includes(q) || item.sub.toLowerCase().includes(q)
+  ).slice(0,8);
+  if(!matches.length){
+    searchResults.innerHTML = `<div class="search-empty">No matches for "${searchInput.value}"</div>`;
+  } else {
+    searchResults.innerHTML = matches.map(m => `
+      <div class="sr-item" onclick='handleSearchClick(${JSON.stringify(m).replace(/'/g,"&#39;")})'>
+        ${m.label}<small>${m.sub}</small>
+      </div>
+    `).join('');
+  }
+  searchResults.classList.add('open');
+});
+
+function handleSearchClick(m){
+  searchResults.classList.remove('open');
+  searchInput.value = '';
+  if(m.type === 'state'){
+    openState(m.slug);
+  } else {
+    openState(m.slug);
+    setTimeout(() => openPlace(m.slug, m.idx), 60);
+  }
+}
+
+document.addEventListener('click', (e) => {
+  if(!e.target.closest('.search-shell')) searchResults.classList.remove('open');
+});
+
+renderRegionJump();
+renderRegions();
+</script>
+</body>
+</html>
