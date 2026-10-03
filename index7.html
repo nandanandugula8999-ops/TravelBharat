@@ -1964,10 +1964,19 @@
       } catch (e) { }
     }
 
+    let _wishPrev = -1;
     function updateWishCount() {
       const countEl = document.getElementById('wishCount');
       const n = wishEntries().length;
-      if (countEl) countEl.textContent = n;
+      if (countEl) {
+        countEl.textContent = n;
+        if (n !== _wishPrev && _wishPrev !== -1) {
+          countEl.classList.remove('pop');
+          void countEl.offsetWidth;
+          countEl.classList.add('pop');
+        }
+      }
+      _wishPrev = n;
       const hb = document.getElementById('headerWishBtn');
       if (hb) hb.setAttribute('aria-label', `My Wishlist (${n} saved)`);
     }
@@ -2145,9 +2154,11 @@
       meta.textContent = `${entries.length} place${entries.length !== 1 ? 's' : ''} saved across ${stateCount} state${stateCount !== 1 ? 's' : ''}`;
       toolbar.style.display = '';
 
-      body.innerHTML = entries.map(({ slug, idx, state, place: p }) => `
+      body.innerHTML = entries.map(({ slug, idx, state, place: p }) => {
+        const inTrip = (typeof itinerary !== 'undefined') && itinerary.has(slug + '|' + idx);
+        return `
         <div class="wl-item" style="--cat-color:${catColor(p.category)}">
-          <div class="wl-thumb">${p.img ? `<img src="${p.img}" alt="${p.name}" loading="lazy">` : `<span>${catLabel(p.category)}</span>`}</div>
+          <div class="wl-thumb">${p.img ? `<img src="${p.img}" alt="${p.name}, ${state.name}" loading="lazy" decoding="async">` : `<span>${catLabel(p.category)}</span>`}</div>
           <div class="wl-info">
             <div class="wl-name">${p.name}</div>
             <div class="wl-sub">${state.name} &middot; ${catLabel(p.category)}</div>
@@ -2155,10 +2166,12 @@
           </div>
           <div class="wl-actions">
             <button class="wl-view" onclick="viewWishPlace('${slug}', ${idx})">View details</button>
+            <button class="it-add-btn wl-trip ${inTrip ? 'added' : ''}" type="button" onclick="toggleItinerary('${slug}', ${idx}, this)" aria-pressed="${inTrip}">${inTrip ? '\u2713 Added to trip' : '+ Add to trip'}</button>
             <a class="wl-book" href="${mmtLink(state, p)}" target="_blank" rel="noopener noreferrer" aria-label="Book a trip to ${p.name} on MakeMyTrip">&#x1F9F3; MakeMyTrip</a>
             <button class="wl-remove" onclick="removeWish('${slug}', ${idx})" aria-label="Remove ${p.name} from wishlist">Remove</button>
           </div>
-        </div>`).join('');
+        </div>`;
+      }).join('');
     }
 
     function openWishlist() {
@@ -3195,6 +3208,14 @@
       .tips { margin: 0 22px 20px; }
       .modal-foot { margin: 18px 22px 0; }
     }
+
+    /* ---------- Wishlist: counter pop, trip button, empty state ---------- */
+    .header-wish .wish-count { transition: transform var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease); }
+    .header-wish .wish-count.pop { animation: tb-wish-pop 0.35s var(--ease); }
+    @keyframes tb-wish-pop { 0% { transform: scale(0.6); } 55% { transform: scale(1.25); } 100% { transform: scale(1); } }
+    .wl-actions .wl-trip { min-height: 38px; font-size: 13px; padding: 8px 14px; }
+    .wl-empty { animation: tb-fade-slide var(--dur-med) var(--ease); }
+    .wl-empty .wl-view { margin-top: 6px; min-height: 44px; padding: 10px 22px; }
 
     /* ---------- Responsive: tablet + mobile (no layout breakage) ---------- */
     @media (max-width: 900px) {
