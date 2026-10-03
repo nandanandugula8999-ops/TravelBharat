@@ -1062,6 +1062,70 @@
 
   <main class="wrap" id="regionsWrap"></main>
 
+  <!-- ========================== DESTINATION DISCOVERY ========================== -->
+  <section class="discover-section" id="discover">
+    <div class="wrap">
+      <div class="region-head">
+        <h2>Find your destination</h2>
+        <p>Filter every place across India. Results update right here — no page jumps.</p>
+      </div>
+      <div class="discover-bar">
+        <button class="chip discover-filter-btn" id="filterBtn" type="button" aria-expanded="false" aria-controls="filterPanel" onclick="toggleDiscoverPanel()">Filter</button>
+        <div class="discover-active" id="activeFilters" aria-live="polite"></div>
+        <div class="discover-meta">
+          <span class="discover-count" id="resultCount" aria-live="polite"></span>
+          <label class="discover-sort">Sort
+            <select id="sortSelect" onchange="setDiscoverSort(this.value)" aria-label="Sort destinations">
+              <option value="recommended">Recommended</option>
+              <option value="name">Name A&ndash;Z</option>
+              <option value="state">State A&ndash;Z</option>
+              <option value="category">Category</option>
+            </select>
+          </label>
+          <button class="discover-reset" id="resetFiltersBtn" type="button" onclick="resetDiscoverFilters()">Reset filters</button>
+        </div>
+      </div>
+      <div class="discover-panel" id="filterPanel" hidden>
+        <label>Region
+          <select id="fRegion" onchange="setDiscoverFilter('region', this.value)"></select>
+        </label>
+        <label>State
+          <select id="fState" onchange="setDiscoverFilter('state', this.value)"></select>
+        </label>
+        <label>Category
+          <select id="fCategory" onchange="setDiscoverFilter('category', this.value)">
+            <option value="all">All categories</option>
+            <option value="heritage">Heritage</option>
+            <option value="nature">Nature</option>
+            <option value="religious">Pilgrimage / Religious</option>
+            <option value="adventure">Adventure</option>
+          </select>
+        </label>
+        <label>Best season
+          <select id="fSeason" onchange="setDiscoverFilter('season', this.value)">
+            <option value="all">Any season</option>
+            <option value="winter">Winter (Oct&ndash;Mar)</option>
+            <option value="summer">Summer (Apr&ndash;Jun)</option>
+            <option value="monsoon">Monsoon (Jul&ndash;Sep)</option>
+          </select>
+        </label>
+        <label>Destination type
+          <select id="fType" onchange="setDiscoverFilter('dtype', this.value)">
+            <option value="all">All types</option>
+            <option value="forts">Forts &amp; Palaces</option>
+            <option value="beach">Beaches &amp; Coast</option>
+            <option value="sacred">Temples &amp; Shrines</option>
+            <option value="water">Lakes, Rivers &amp; Falls</option>
+            <option value="hills">Hills &amp; Valleys</option>
+            <option value="wildlife">Wildlife &amp; Parks</option>
+          </select>
+        </label>
+        <label class="discover-check"><input type="checkbox" id="fPopular" onchange="setDiscoverFilter('popular', this.checked ? 'yes' : 'all')"> Popular only</label>
+      </div>
+      <div class="place-list" id="discoverResults"></div>
+    </div>
+  </section>
+
   <div class="state-view" id="stateView"></div>
 
   <footer>TravelBharat a state-wise directory of Indian tourist places, built for travellers, students, and the
@@ -1464,6 +1528,8 @@
       document.getElementById('homeHero').style.display = '';
       document.getElementById('regionsWrap').style.display = '';
       document.querySelector('.gallery-section').style.display = '';
+      const disc = document.getElementById('discover');
+      if (disc) disc.style.display = '';
       closeModal();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -1479,6 +1545,8 @@
       document.getElementById('homeHero').style.display = 'none';
       document.getElementById('regionsWrap').style.display = 'none';
       document.querySelector('.gallery-section').style.display = 'none';
+      const discHide = document.getElementById('discover');
+      if (discHide) discHide.style.display = 'none';
       const view = document.getElementById('stateView');
       view.classList.add('active');
       renderStateView(state);
@@ -1648,6 +1716,152 @@
     renderRegionJump();
     renderRegions();
     renderGallery();
+
+    // ==== DESTINATION DISCOVERY (filter + sort, user-controlled, no page jumps) ====
+    const DISCOVER = { region: 'all', state: 'all', category: 'all', season: 'all', dtype: 'all', popular: 'all', sort: 'recommended' };
+    const MONTHS = { january: 1, february: 2, march: 3, april: 4, may: 5, june: 6, july: 7, august: 8, september: 9, october: 10, november: 11, december: 12 };
+    const SEASONS = { winter: [10, 11, 12, 1, 2, 3], summer: [4, 5, 6], monsoon: [7, 8, 9] };
+
+    function discoverMonths(best) {
+      const t = String(best || '').toLowerCase();
+      const found = [];
+      Object.keys(MONTHS).forEach(m => { if (t.includes(m)) found.push(MONTHS[m]); });
+      if (!found.length) return [];
+      if (found.length >= 2 && /to|-|–/.test(t)) {
+        const out = [];
+        let cur = found[0];
+        const end = found[found.length - 1];
+        for (let n = 0; n < 12; n++) { out.push(cur); if (cur === end) break; cur = cur % 12 + 1; }
+        return out;
+      }
+      return found;
+    }
+    function discoverSeasonMatch(best, season) {
+      if (season === 'all') return true;
+      const months = discoverMonths(best);
+      if (!months.length) return true;
+      return months.some(m => SEASONS[season].includes(m));
+    }
+    function discoverType(p) {
+      const t = `${p.name} ${p.desc}`.toLowerCase();
+      if (/fort|palace|fortress|caves|tomb|minar|memorial|jail/.test(t)) return 'forts';
+      if (/beach|coast|island|lagoon/.test(t)) return 'beach';
+      if (/temple|shrine|church|mosque|monastery|gurdwara|ghat|dargah/.test(t)) return 'sacred';
+      if (/lake|river|waterfall|backwater|falls|delta/.test(t)) return 'water';
+      if (/park|sanctuary|safari|tiger|lion|rhino|reserve|wildlife/.test(t)) return 'wildlife';
+      if (/hill|valley|peak|pass|desert|dune|meadow|glacier/.test(t)) return 'hills';
+      return 'other';
+    }
+    function discoverPopularSet() {
+      const s = new Set();
+      if (typeof GALLERY !== 'undefined') GALLERY.forEach(g => s.add(g.slug + '|' + g.idx));
+      return s;
+    }
+    function discoverAllPlaces() {
+      const out = [];
+      DATA.states.forEach(st => st.places.forEach((p, i) => out.push({ state: st, place: p, idx: i })));
+      return out;
+    }
+    function toggleDiscoverPanel() {
+      const panel = document.getElementById('filterPanel');
+      const btn = document.getElementById('filterBtn');
+      const show = panel.hidden;
+      panel.hidden = !show;
+      btn.setAttribute('aria-expanded', show ? 'true' : 'false');
+    }
+    function setDiscoverFilter(key, value) { DISCOVER[key] = value; applyDiscoverFilters(); }
+    function setDiscoverSort(value) { DISCOVER.sort = value; applyDiscoverFilters(); }
+    function resetDiscoverFilters() {
+      DISCOVER.region = 'all'; DISCOVER.state = 'all'; DISCOVER.category = 'all';
+      DISCOVER.season = 'all'; DISCOVER.dtype = 'all'; DISCOVER.popular = 'all';
+      document.getElementById('fRegion').value = 'all';
+      document.getElementById('fState').value = 'all';
+      document.getElementById('fCategory').value = 'all';
+      document.getElementById('fSeason').value = 'all';
+      document.getElementById('fType').value = 'all';
+      document.getElementById('fPopular').checked = false;
+      document.getElementById('sortSelect').value = 'recommended';
+      DISCOVER.sort = 'recommended';
+      applyDiscoverFilters();
+    }
+    function clearDiscoverKey(key) {
+      const defaults = { region: 'all', state: 'all', category: 'all', season: 'all', dtype: 'all', popular: 'all' };
+      DISCOVER[key] = defaults[key];
+      const map = { region: 'fRegion', state: 'fState', category: 'fCategory', season: 'fSeason', dtype: 'fType' };
+      if (map[key]) document.getElementById(map[key]).value = 'all';
+      if (key === 'popular') document.getElementById('fPopular').checked = false;
+      applyDiscoverFilters();
+    }
+    function discoverLabel(key, val) {
+      if (key === 'region') return (DATA.regions.find(r => r.key === val) || {}).name || val;
+      if (key === 'state') return (DATA.states.find(s => s.slug === val) || {}).name || val;
+      if (key === 'category') return val === 'religious' ? 'Pilgrimage' : catLabel(val);
+      if (key === 'season') return { winter: 'Winter', summer: 'Summer', monsoon: 'Monsoon' }[val] || val;
+      if (key === 'dtype') return { forts: 'Forts & Palaces', beach: 'Beaches & Coast', sacred: 'Temples & Shrines', water: 'Lakes & Rivers', hills: 'Hills & Valleys', wildlife: 'Wildlife & Parks' }[val] || val;
+      if (key === 'popular') return 'Popular only';
+      return val;
+    }
+    function applyDiscoverFilters() {
+      const box = document.getElementById('discoverResults');
+      const pills = document.getElementById('activeFilters');
+      const count = document.getElementById('resultCount');
+      if (!box) return;
+      const popularSet = discoverPopularSet();
+      let list = discoverAllPlaces().filter(({ state, place, idx }) => {
+        if (!state || state.hidden && DISCOVER.state !== state.slug) {
+          if (DISCOVER.state !== 'all' && DISCOVER.state !== state.slug) return false;
+          if (DISCOVER.state === 'all' && state.hidden) return false;
+        }
+        if (DISCOVER.region !== 'all' && state.region !== DISCOVER.region) return false;
+        if (DISCOVER.state !== 'all' && state.slug !== DISCOVER.state) return false;
+        if (DISCOVER.category !== 'all' && place.category !== DISCOVER.category) return false;
+        if (!discoverSeasonMatch(place.best, DISCOVER.season)) return false;
+        if (DISCOVER.dtype !== 'all' && discoverType(place) !== DISCOVER.dtype) return false;
+        if (DISCOVER.popular === 'yes' && !popularSet.has(state.slug + '|' + idx)) return false;
+        return true;
+      });
+      const stateCount = new Set(list.map(x => x.state.slug)).size;
+      if (DISCOVER.sort === 'name') list.sort((a, b) => a.place.name.localeCompare(b.place.name));
+      else if (DISCOVER.sort === 'state') list.sort((a, b) => a.state.name.localeCompare(b.state.name) || a.place.name.localeCompare(b.place.name));
+      else if (DISCOVER.sort === 'category') list.sort((a, b) => catLabel(a.place.category).localeCompare(catLabel(b.place.category)) || a.place.name.localeCompare(b.place.name));
+      const activeKeys = ['region', 'state', 'category', 'season', 'dtype', 'popular'].filter(k => DISCOVER[k] !== 'all');
+      pills.innerHTML = activeKeys.length
+        ? activeKeys.map(k => `<span class="discover-pill">${discoverLabel(k, DISCOVER[k])}<button type="button" onclick="clearDiscoverKey('${k}')" aria-label="Remove ${k} filter">&times;</button></span>`).join('')
+        : `<span class="discover-count">Showing everything — add a filter to narrow it down.</span>`;
+      count.textContent = `${list.length} place${list.length !== 1 ? 's' : ''} across ${stateCount} state${stateCount !== 1 ? 's' : ''}`;
+      if (!list.length) {
+        box.innerHTML = `<div class="discover-empty">No places match these filters yet. Try widening the season or clearing one filter above.</div>`;
+        return;
+      }
+      const canWish = (typeof wishlist !== 'undefined');
+      const canTrip = (typeof itinerary !== 'undefined');
+      box.innerHTML = list.slice(0, 24).map(({ state, place, idx }) => {
+        const key = state.slug + '|' + idx;
+        const isWish = canWish && wishlist.has(key);
+        const inTrip = canTrip && itinerary.has(key);
+        return `
+      <div class="place-card" style="--cat-color:${catColor(place.category)}" onclick="openPlace('${state.slug}', ${idx}, true)">
+        <button class="wish-btn ${isWish ? 'active' : ''}" type="button" onclick="event.stopPropagation(); toggleWish('${state.slug}', ${idx}, this)" aria-label="Save to wishlist">${isWish ? '\u2605' : ' \u2606'}</button>
+        ${place.img ? `<img src="${place.img}" alt="${place.name}" loading="lazy" style="width:100%;height:130px;object-fit:cover;">` : `<div class="placeholder">${catLabel(place.category)}</div>`}
+        <div class="place-card-body">
+          <div class="cat-label">${catLabel(place.category)} &middot; ${state.name}</div>
+          <h4>${place.name}</h4>
+          <p>${place.desc}</p>
+        </div>
+        <div class="place-card-actions">
+          <button class="it-add-btn ${inTrip ? 'added' : ''}" type="button" onclick="event.stopPropagation(); toggleItinerary('${state.slug}', ${idx}, this)" aria-pressed="${inTrip}">${inTrip ? '\u2713 Added to trip' : '+ Add to trip'}</button>
+        </div>
+      </div>`;
+      }).join('') + (list.length > 24 ? `<div class="discover-empty">Showing 24 of ${list.length} — narrow filters to see more specific picks.</div>` : '');
+    }
+    function initDiscover() {
+      const rSel = document.getElementById('fRegion');
+      const sSel = document.getElementById('fState');
+      if (!rSel || !sSel) return;
+      rSel.innerHTML = `<option value="all">All regions</option>` + DATA.regions.map(r => `<option value="${r.key}">${r.name}</option>`).join('');
+      sSel.innerHTML = `<option value="all">All states</option>` + DATA.states.filter(s => !s.hidden).sort((a, b) => a.name.localeCompare(b.name)).map(s => `<option value="${s.slug}">${s.name}</option>`).join('');
+      applyDiscoverFilters();
+    }
 
     // ==== WISHLIST ====
     const wishlist = new Set();
@@ -1929,6 +2143,7 @@
       // Ensure wish count is updated on load
       updateWishCount();
       updateItineraryUI();
+      try { initDiscover(); } catch (e) { }
 
       // Close modals on escape
       document.addEventListener('keydown', (e) => {
@@ -2767,6 +2982,64 @@
     @keyframes tb-modal-in { from { opacity: 0; transform: translateY(18px) scale(0.98); } to { opacity: 1; transform: none; } }
     @keyframes tb-fade-slide { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
     @keyframes tb-pop { 0% { transform: scale(0.85); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
+
+    /* ---------- Destination discovery (editorial, on-identity) ---------- */
+    .discover-section { padding: 52px 0; border-bottom: 1px solid var(--line); }
+    .discover-bar {
+      display: flex; align-items: center; flex-wrap: wrap;
+      gap: 10px 14px; margin-bottom: 18px;
+    }
+    .discover-filter-btn { font-weight: 600; }
+    .discover-filter-btn[aria-expanded="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    .discover-active { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; min-width: 160px; }
+    .discover-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      border: 1px solid var(--line-strong); border-radius: 999px;
+      padding: 5px 8px 5px 14px; font-size: 12.5px; background: var(--paper-raised);
+    }
+    .discover-pill button {
+      border: none; background: var(--gold-bg); color: var(--ink);
+      width: 22px; height: 22px; border-radius: 50%; cursor: pointer;
+      font-size: 13px; line-height: 1;
+    }
+    .discover-pill button:hover { background: var(--gold); color: #fff; }
+    .discover-meta { display: flex; align-items: center; gap: 12px; margin-left: auto; flex-wrap: wrap; }
+    .discover-count { font-size: 13px; color: var(--ink-soft); white-space: nowrap; }
+    .discover-sort { font-size: 13px; color: var(--ink-soft); display: inline-flex; align-items: center; gap: 8px; }
+    .discover-sort select, .discover-panel select {
+      font-family: 'Work Sans', sans-serif; font-size: 13.5px; color: var(--ink);
+      background: var(--paper-raised); border: 1px solid var(--line-strong);
+      border-radius: 6px; padding: 8px 10px; cursor: pointer;
+    }
+    .discover-sort select:hover, .discover-panel select:hover { border-color: var(--gold); }
+    .discover-reset {
+      border: 1px solid var(--line-strong); background: transparent; color: var(--ink);
+      border-radius: 999px; padding: 7px 16px; font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: 'Work Sans', sans-serif;
+      transition: border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+    }
+    .discover-reset:hover { border-color: var(--maroon); color: var(--maroon); transform: translateY(-1px); }
+    .discover-reset:active { transform: scale(0.96); }
+    .discover-panel {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px 16px; padding: 20px; margin-bottom: 22px;
+      border: 1px solid var(--line); border-radius: var(--radius-md);
+      background: var(--paper-raised); box-shadow: var(--shadow-sm);
+    }
+    .discover-panel[hidden] { display: none; }
+    .discover-panel label { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); }
+    .discover-check { flex-direction: row !important; align-items: center; gap: 10px !important; padding-top: 22px; cursor: pointer; }
+    .discover-check input { width: 18px; height: 18px; accent-color: var(--gold); cursor: pointer; }
+    .discover-empty {
+      grid-column: 1 / -1; text-align: center; padding: 36px 16px;
+      border: 1px dashed var(--line-strong); border-radius: var(--radius-md);
+      color: var(--ink-soft); font-size: 14px;
+    }
+    @media (max-width: 640px) {
+      .discover-meta { margin-left: 0; width: 100%; justify-content: space-between; }
+      .discover-panel { grid-template-columns: 1fr 1fr; padding: 16px; }
+    }
+    @media (max-width: 420px) { .discover-panel { grid-template-columns: 1fr; } }
 
     /* ---------- Responsive: tablet + mobile (no layout breakage) ---------- */
     @media (max-width: 900px) {
