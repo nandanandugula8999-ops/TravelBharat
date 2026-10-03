@@ -5,6 +5,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TravelBharat &#8212; Explore India, State by State</title>
+  <meta name="description" content="TravelBharat is a free state-by-state field guide to India's tourist places — heritage forts, nature parks, pilgrimage towns and adventure valleys, with timings, fees and maps.">
+  <link rel="canonical" href="https://travelbharat.example.com/index7.html">
+  <meta name="theme-color" content="#1E2A45">
+  <meta name="color-scheme" content="light dark">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TravelBharat">
+  <meta property="og:title" content="TravelBharat — Explore India, State by State">
+  <meta property="og:description" content="A free field guide to India's tourist places, organised state by state — with timings, fees, maps, wishlist and trip planner.">
+  <meta property="og:image" content="favicon.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="TravelBharat — Explore India, State by State">
+  <meta name="twitter:description" content="A free field guide to India's tourist places, organised state by state.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="icon" type="image/png" href="favicon.png">
@@ -1019,6 +1031,7 @@
 </head>
 
 <body>
+  <a class="skip-link" href="#regionsWrap">Skip to destinations</a>
 
   <header>
     <div class="wrap bar">
@@ -1053,7 +1066,7 @@
   <section class="gallery-section">
     <div class="wrap">
       <div class="region-head">
-        <h2>Gallery</h2>
+        <h2>Popular destinations</h2>
         <p>A few places worth seeing before you read about them.</p>
       </div>
       <div class="gallery-grid" id="galleryGrid"></div>
@@ -1126,10 +1139,53 @@
     </div>
   </section>
 
-  <div class="state-view" id="stateView"></div>
+  <!-- ========================== EXPLORE BY CATEGORY ========================== -->
+  <section class="cat-section home-section" id="browseCategory">
+    <div class="wrap">
+      <div class="region-head">
+        <h2>Explore by category</h2>
+        <p>Four ways to read the country — pick a lens.</p>
+      </div>
+      <div class="cat-grid">
+        <button class="cat-card" type="button" onclick="browseCategory('heritage')"><span class="cat-card-name">Heritage</span><span class="cat-card-sub">Forts, palaces &amp; cave temples</span><span class="cat-card-count" data-catcount="heritage"></span></button>
+        <button class="cat-card" type="button" onclick="browseCategory('nature')"><span class="cat-card-name">Nature</span><span class="cat-card-sub">Parks, beaches &amp; backwaters</span><span class="cat-card-count" data-catcount="nature"></span></button>
+        <button class="cat-card" type="button" onclick="browseCategory('religious')"><span class="cat-card-name">Pilgrimage</span><span class="cat-card-sub">Temples, shrines &amp; ghats</span><span class="cat-card-count" data-catcount="religious"></span></button>
+        <button class="cat-card" type="button" onclick="browseCategory('adventure')"><span class="cat-card-name">Adventure</span><span class="cat-card-sub">Treks, passes &amp; valleys</span><span class="cat-card-count" data-catcount="adventure"></span></button>
+      </div>
+    </div>
+  </section>
 
-  <footer>TravelBharat a state-wise directory of Indian tourist places, built for travellers, students, and the
-    curious.</footer>
+  <!-- ========================== HIDDEN GEMS ========================== -->
+  <section class="gems-section home-section" id="hiddenGems">
+    <div class="wrap">
+      <div class="region-head">
+        <h2>Hidden gems</h2>
+        <p>Quieter corners from the smaller states and territories.</p>
+      </div>
+      <div class="gems-grid" id="gemsGrid"></div>
+    </div>
+  </section>
+
+  <!-- ========================== PLAN YOUR TRIP ========================== -->
+  <section class="plan-section home-section" id="planTrip">
+    <div class="wrap">
+      <div class="plan-banner">
+        <div>
+          <div class="plan-eyebrow">Plan your trip</div>
+          <h2>Collect places, get a day-by-day plan.</h2>
+          <p>Tap <strong>+ Add to trip</strong> on any destination, then open the planner. <span id="planTripCount" aria-live="polite"></span></p>
+          <ul class="plan-tips">
+            <li>Start early for the big sights and softer light.</li>
+            <li>Recheck timings the evening before — shrines and parks often close midday or weekly.</li>
+            <li>Carry permits a day ahead wherever the details mention one.</li>
+          </ul>
+        </div>
+        <button class="itinerary-btn plan-cta" type="button" onclick="openItineraryModal()">Open trip planner</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="state-view" id="stateView"></div>
 
   <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal" id="modalBody"></div>
@@ -1139,7 +1195,7 @@
     <div class="wl-inner">
       <button class="wl-close" id="wishlistClose" onclick="closeWishlist()" aria-label="Close wishlist">&times;</button>
       <h3 id="wishlistTitle">My Wishlist</h3>
-      <div class="wl-meta" id="wishlistMeta"></div>
+      <div class="wl-meta" id="wishlistMeta" aria-live="polite"></div>
       <div class="wl-toolbar" id="wishlistToolbar">
         <button class="wl-clear" id="wishlistClear" onclick="clearWishlist()">Clear all</button>
       </div>
@@ -1151,7 +1207,7 @@
     <div class="it-inner">
       <button class="it-close" onclick="closeItineraryModal()" aria-label="Close">&times;</button>
       <h3 id="itineraryTitle">Your Trip Plan</h3>
-      <div class="it-meta" id="itineraryMeta"></div>
+      <div class="it-meta" id="itineraryMeta" aria-live="polite"></div>
       <div id="itineraryBody"></div>
     </div>
   </div>
@@ -1496,7 +1552,7 @@
         const states = DATA.states.filter(s => s.region === r.key && !s.hidden);
         if (!states.length) return '';
         const tiles = states.map(s => `
-      <div class="state-tile ${s.heroImg ? 'has-img' : ''}" onclick="openState('${s.slug}')">
+      <div class="state-tile ${s.heroImg ? 'has-img' : ''}" role="button" tabindex="0" aria-label="Explore ${s.name}" onclick="openState('${s.slug}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openState('${s.slug}');}">
         ${s.heroImg ? `<div class="state-tile-img"><img src="${s.heroImg}" alt="${s.name}" loading="lazy"></div>` : ''}
         <div class="state-tile-body">
           <div class="rule"></div>
@@ -1523,6 +1579,16 @@
       });
     }
 
+    /* Footer FAQ link: user-initiated return home, then scroll to FAQ (no auto shifts) */
+    function goFaq() {
+      goHome();
+      requestAnimationFrame(() => {
+        const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const f = document.getElementById('faqs');
+        if (f) f.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      });
+    }
+
     function goHome() {
       document.getElementById('stateView').classList.remove('active');
       document.getElementById('homeHero').style.display = '';
@@ -1530,16 +1596,26 @@
       document.querySelector('.gallery-section').style.display = '';
       const disc = document.getElementById('discover');
       if (disc) disc.style.display = '';
+      ['browseCategory', 'hiddenGems', 'planTrip'].forEach(id => {
+        const s = document.getElementById(id);
+        if (s) s.style.display = '';
+      });
       closeModal();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (typeof _homeScroll === 'number') {
+        window.scrollTo({ top: _homeScroll, behavior: 'auto' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
 
     let currentStateSlug = null;
     let activeFilter = 'all';
+    let _homeScroll = 0;
 
     function openState(slug) {
       const state = DATA.states.find(s => s.slug === slug);
-      if (!state) return;
+      if (!state) { showToast('Destination not found'); return; }
+      _homeScroll = window.scrollY || 0;
       currentStateSlug = slug;
       activeFilter = 'all';
       document.getElementById('homeHero').style.display = 'none';
@@ -1547,6 +1623,10 @@
       document.querySelector('.gallery-section').style.display = 'none';
       const discHide = document.getElementById('discover');
       if (discHide) discHide.style.display = 'none';
+      ['browseCategory', 'hiddenGems', 'planTrip'].forEach(id => {
+        const s = document.getElementById(id);
+        if (s) s.style.display = 'none';
+      });
       const view = document.getElementById('stateView');
       view.classList.add('active');
       renderStateView(state);
@@ -1565,6 +1645,7 @@
       <div class="state-header">
         <h2>${state.name}</h2>
         <div class="state-meta">Capital: ${state.capital} &middot; ${DATA.regions.find(r => r.key === state.region).name} India</div>
+        <div class="state-count" aria-live="polite">${state.places.length} destination${state.places.length !== 1 ? 's' : ''} &middot; ${cats.length} categor${cats.length !== 1 ? 'ies' : 'y'}: ${cats.map(catLabel).join(', ')}</div>
         <p class="state-desc">${state.tagline}</p>
       </div>
       <div class="chip-row" id="chipRow">${chips}</div>
@@ -1578,7 +1659,7 @@
           <button class="itinerary-btn" id="generateItineraryBtn" type="button" onclick="openItineraryModal()" disabled>Generate itinerary</button>
         </div>
       </div>
-      <div class="place-list" id="placeList"></div>
+      <div class="place-list" id="placeList" aria-live="polite"></div>
     </div>
   `;
       renderPlaces(state);
@@ -1626,6 +1707,7 @@
           <div><dt>Duration</dt><dd>Suggested: ${recommendedDuration(p)}</dd></div>
           <div><dt>Entry</dt><dd>${p.fee}</dd></div>
         </dl>
+        <a class="pc-map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.map)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" aria-label="View ${p.name} on Google Maps">&#x1F4CD; View on Map</a>
       </div>
       <div class="place-card-actions">
         <button class="pc-details-btn" type="button" onclick="event.stopPropagation(); openPlace('${state.slug}', ${realIdx}, true)">View details</button>
@@ -1664,7 +1746,8 @@
 
     function openPlace(stateSlug, idx, fromRegion) {
       const state = DATA.states.find(s => s.slug === stateSlug);
-      const p = state.places[idx];
+      const p = state && state.places[idx];
+      if (!state || !p) { showToast('Destination not found'); return; }
       const overlay = document.getElementById('modalOverlay');
       const nearby = state.places.filter((x, i) => i !== idx).slice(0, 3);
       const key = stateSlug + '|' + idx;
@@ -1730,6 +1813,8 @@
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     });
 
+    function escHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
     /* search */
     const searchInput = document.getElementById('searchInput');
     const searchResults = document.getElementById('searchResults');
@@ -1753,11 +1838,11 @@
         item.label.toLowerCase().includes(q) || item.sub.toLowerCase().includes(q)
       ).slice(0, 8);
       if (!matches.length) {
-        searchResults.innerHTML = `<div class="search-empty">No matches for "${searchInput.value}"</div>`;
+        searchResults.innerHTML = `<div class="search-empty" role="option" aria-selected="false">No matches for &ldquo;${escHtml(searchInput.value.trim())}&rdquo;. Try a state, place or category.</div>`;
       } else {
         searchResults.innerHTML = matches.map(m => `
-      <div class="sr-item" onclick='handleSearchClick(${JSON.stringify(m).replace(/'/g, "&#39;")})'>
-        ${m.label}<small>${m.sub}</small>
+      <div class="sr-item" role="option" tabindex="0" onclick='handleSearchClick(${JSON.stringify(m).replace(/'/g, "&#39;")})' onkeydown="if(event.key==='Enter'){handleSearchClick(${JSON.stringify(m).replace(/'/g, "&#39;").replace(/"/g, '&quot;')})}">
+        ${escHtml(m.label)}<small>${escHtml(m.sub)}</small>
       </div>
     `).join('');
       }
@@ -1918,6 +2003,7 @@
             <div><dt>Duration</dt><dd>Suggested: ${recommendedDuration(place)}</dd></div>
             <div><dt>Entry</dt><dd>${place.fee}</dd></div>
           </dl>
+          <a class="pc-map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.map)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" aria-label="View ${place.name} on Google Maps">&#x1F4CD; View on Map</a>
         </div>
         <div class="place-card-actions">
           <button class="pc-details-btn" type="button" onclick="event.stopPropagation(); openPlace('${state.slug}', ${idx}, true)">View details</button>
@@ -1948,9 +2034,31 @@
       }
     } catch (e) { }
 
+    /* Reusable toast notifications: polite live region, auto-dismiss, closable */
+    function showToast(msg) {
+      const stack = document.getElementById('toastStack');
+      if (!stack || !msg) return;
+      while (stack.children.length >= 3) stack.firstChild.remove();
+      const t = document.createElement('div');
+      t.className = 'toast';
+      const s = document.createElement('span');
+      s.textContent = msg;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'toast-close';
+      b.setAttribute('aria-label', 'Dismiss notification');
+      b.textContent = '\u00D7';
+      b.onclick = () => t.remove();
+      t.appendChild(s);
+      t.appendChild(b);
+      stack.appendChild(t);
+      setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 250); }, 2600);
+    }
+
     function toggleWish(stateSlug, idx, btnEl) {
       const key = stateSlug + '|' + idx;
-      if (wishlist.has(key)) {
+      const added = !wishlist.has(key);
+      if (!added) {
         wishlist.delete(key);
         if (btnEl) { btnEl.classList.remove('active'); btnEl.innerHTML = ' \u2606'; }
       } else {
@@ -1962,6 +2070,7 @@
       try {
         localStorage.setItem('travelbharat-wishlist', JSON.stringify([...wishlist]));
       } catch (e) { }
+      showToast(added ? 'Added to wishlist' : 'Removed from wishlist');
     }
 
     let _wishPrev = -1;
@@ -1990,27 +2099,31 @@
       const generateBtn = document.getElementById('generateItineraryBtn');
       if (countEl) countEl.textContent = `${count} place${count !== 1 ? 's' : ''} selected`;
       if (generateBtn) generateBtn.disabled = count === 0;
+      const pt = document.getElementById('planTripCount');
+      if (pt) pt.textContent = count ? `${count} place${count !== 1 ? 's' : ''} saved so far.` : 'No places saved yet.';
     }
 
     let tripPace = 3; // places per day: user-controlled, no auto changes
     let _tripClearTimer = null;
+    let _tripLastFocus = null;
     const TRIP_SLOTS = ['Morning', 'Afternoon', 'Evening', 'Late evening'];
     const TRIP_HOURS = { 'Half day': 4, '2\u20133 hours': 2.5, 'Full day': 7, 'Half\u2013full day': 5 };
 
     function toggleItinerary(stateSlug, idx, btnEl) {
       const key = stateSlug + '|' + idx;
-      if (itinerary.has(key)) {
+      const added = !itinerary.has(key);
+      if (!added) {
         itinerary.delete(key);
       } else {
         itinerary.add(key);
       }
       updateItineraryUI();
       if (btnEl) {
-        const added = itinerary.has(key);
         btnEl.classList.toggle('added', added);
         btnEl.setAttribute('aria-pressed', added ? 'true' : 'false');
         btnEl.textContent = added ? '\u2713 Added to trip' : '+ Add to trip';
       }
+      showToast(added ? 'Added to itinerary' : 'Removed from itinerary');
     }
 
     function tripStopMapsUrl(stateName, place) {
@@ -2063,6 +2176,7 @@
       updateItineraryUI();
       syncTripButtons();
       openItineraryModal();
+      showToast('Itinerary cleared');
     }
 
     function openItineraryModal() {
@@ -2070,6 +2184,8 @@
       const titleEl = document.getElementById('itineraryTitle');
       const metaEl = document.getElementById('itineraryMeta');
       const bodyEl = document.getElementById('itineraryBody');
+      const wasOpen = modal.classList.contains('open');
+      if (!wasOpen) _tripLastFocus = document.activeElement;
 
       if (itinerary.size === 0) {
         titleEl.textContent = 'Your Trip Plan';
@@ -2079,6 +2195,7 @@
           <button class="wl-view" type="button" onclick="closeItineraryModal(); goHome();">Start exploring</button>
         </div>`;
         modal.classList.add('open');
+        if (!wasOpen) { const c = modal.querySelector('.it-close'); if (c) c.focus(); }
         return;
       }
 
@@ -2142,6 +2259,7 @@
       }).join('')}`;
 
       modal.classList.add('open');
+      if (!wasOpen) { const c = modal.querySelector('.it-close'); if (c) c.focus(); }
     }
 
     function itineraryText() {
@@ -2187,14 +2305,17 @@
       if (navigator.share) {
         navigator.share({ title: 'My TravelBharat Trip', text }).catch(() => { });
       } else if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(() => done('Copied!')).catch(() => done('Copy failed'));
+        navigator.clipboard.writeText(text).then(() => { done('Copied!'); showToast('Copied successfully'); }).catch(() => done('Copy failed'));
       } else { done('Share unavailable'); }
     }
 
     function closeItineraryModal() {
-      document.getElementById('itineraryModal').classList.remove('open');
+      const m = document.getElementById('itineraryModal');
+      if (!m || !m.classList.contains('open')) return;
+      m.classList.remove('open');
       const btn = document.getElementById('tripClearBtn');
       if (btn) { btn.dataset.armed = ''; btn.textContent = 'Clear trip'; }
+      if (_tripLastFocus && _tripLastFocus.focus) { try { _tripLastFocus.focus(); } catch (e) { } _tripLastFocus = null; }
     }
 
     // ==== MY WISHLIST PANEL ====
@@ -2308,6 +2429,7 @@
       saveWishlist();
       renderWishlist();
       syncWishButtons();
+      showToast('Removed from wishlist');
     }
 
     // two taps so a stray click can't wipe the list
@@ -2324,10 +2446,80 @@
       saveWishlist();
       renderWishlist();
       syncWishButtons();
+      showToast('Wishlist cleared');
+    }
+
+    /* Home helpers: category browse, hidden gems, FAQ accordion, dialog focus */
+    function browseCategory(cat) {
+      closeModal();
+      document.getElementById('stateView').classList.remove('active');
+      document.getElementById('homeHero').style.display = '';
+      document.getElementById('regionsWrap').style.display = '';
+      document.querySelector('.gallery-section').style.display = '';
+      const disc = document.getElementById('discover');
+      if (disc) disc.style.display = '';
+      ['browseCategory', 'hiddenGems', 'planTrip'].forEach(id => {
+        const s = document.getElementById(id);
+        if (s) s.style.display = '';
+      });
+      setDiscoverFilter('category', cat);
+      const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const target = document.getElementById('discover');
+      if (target) target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    }
+
+    function initHomeSections() {
+      const counts = { heritage: 0, nature: 0, religious: 0, adventure: 0 };
+      DATA.states.forEach(s => {
+        if (s.hidden) return;
+        s.places.forEach(p => { if (counts[p.category] != null) counts[p.category]++; });
+      });
+      document.querySelectorAll('[data-catcount]').forEach(el => {
+        const c = counts[el.getAttribute('data-catcount')] || 0;
+        el.textContent = c + ' places';
+      });
+      const grid = document.getElementById('gemsGrid');
+      if (grid) {
+        const gems = [];
+        DATA.states.forEach(s => {
+          if (s.hidden && s.places.length && gems.length < 6) gems.push({ state: s, place: s.places[0], idx: 0 });
+        });
+        grid.innerHTML = gems.map(({ state, place, idx }) => `
+          <div class="gem-card">
+            ${place.img ? `<img src="${place.img}" alt="${place.name}, ${state.name}" loading="lazy">` : ''}
+            <div class="gem-body">
+              <div class="gem-state">${state.name}</div>
+              <div class="gem-name">${place.name}</div>
+              <button class="gem-view" type="button" onclick="openPlace('${state.slug}', ${idx}, true)">View</button>
+            </div>
+          </div>`).join('');
+      }
+    }
+
+    function toggleFaq(btn) {
+      const open = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+    }
+
+    function trapTabKey(container, e) {
+      const items = Array.from(container.querySelectorAll('button, a[href], select, input, [tabindex]:not([tabindex="-1"])')).filter(el => !el.disabled && el.offsetParent !== null);
+      if (!items.length) return;
+      const first = items[0], last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     }
 
     document.getElementById('wishlistModal').addEventListener('click', (e) => {
       if (e.target.id === 'wishlistModal') closeWishlist();
+    });
+    document.getElementById('wishlistModal').addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') trapTabKey(document.getElementById('wishlistModal'), e);
+    });
+    document.getElementById('itineraryModal').addEventListener('click', (e) => {
+      if (e.target.id === 'itineraryModal') closeItineraryModal();
+    });
+    document.getElementById('itineraryModal').addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') trapTabKey(document.getElementById('itineraryModal'), e);
     });
 
 
@@ -2338,6 +2530,7 @@
       updateWishCount();
       updateItineraryUI();
       try { initDiscover(); } catch (e) { }
+      try { initHomeSections(); } catch (e) { }
 
       // Close modals on escape
       document.addEventListener('keydown', (e) => {
@@ -2360,52 +2553,52 @@
       <div class="faq-grid">
 
         <div class="faq-card">
-          <div class="faq-q">What is TravelBharat?</div>
-          <div class="faq-a">TravelBharat is a free guide to explore India state by state. Find destinations, read about
-            places, check timings and fees, and open them in Google Maps &#8212; all in one spot.</div>
+          <button class="faq-q" aria-expanded="false" aria-controls="faq-a1" id="faq-q1" onclick="toggleFaq(this)"><span>What is TravelBharat?</span><span class="faq-icon" aria-hidden="true">+</span></button>
+          <div class="faq-a" id="faq-a1" role="region" aria-labelledby="faq-q1"><div class="faq-a-inner"><div>TravelBharat is a free guide to explore India state by state. Find destinations, read about
+            places, check timings and fees, and open them in Google Maps &#8212; all in one spot.</div></div></div>
         </div>
 
         <div class="faq-card">
-          <div class="faq-q">Is it free to use?</div>
-          <div class="faq-a">Yes, completely free. No sign-up, no subscription, no hidden charges. Just open the site
-            and start exploring.</div>
+          <button class="faq-q" aria-expanded="false" aria-controls="faq-a2" id="faq-q2" onclick="toggleFaq(this)"><span>Is it free to use?</span><span class="faq-icon" aria-hidden="true">+</span></button>
+          <div class="faq-a" id="faq-a2" role="region" aria-labelledby="faq-q2"><div class="faq-a-inner"><div>Yes, completely free. No sign-up, no subscription, no hidden charges. Just open the site
+            and start exploring.</div></div></div>
         </div>
 
         <div class="faq-card">
-          <div class="faq-q">How do I find a place or state?</div>
-          <div class="faq-a">Use the search bar at the top to type any state or destination name. Results show up
-            instantly as you type.</div>
+          <button class="faq-q" aria-expanded="false" aria-controls="faq-a3" id="faq-q3" onclick="toggleFaq(this)"><span>How do I find a place or state?</span><span class="faq-icon" aria-hidden="true">+</span></button>
+          <div class="faq-a" id="faq-a3" role="region" aria-labelledby="faq-q3"><div class="faq-a-inner"><div>Use the search bar at the top to type any state or destination name. Results show up
+            instantly as you type.</div></div></div>
         </div>
 
         <div class="faq-card">
-          <div class="faq-q">When is the best time to visit?</div>
-          <div class="faq-a">Click on any destination card &#8212; the detail panel shows the recommended months to
+          <button class="faq-q" aria-expanded="false" aria-controls="faq-a4" id="faq-q4" onclick="toggleFaq(this)"><span>When is the best time to visit?</span><span class="faq-icon" aria-hidden="true">+</span></button>
+          <div class="faq-a" id="faq-a4" role="region" aria-labelledby="faq-q4"><div class="faq-a-inner"><div>Click on any destination card &#8212; the detail panel shows the recommended months to
             visit
-            along with entry fees and timings.</div>
+            along with entry fees and timings.</div></div></div>
         </div>
 
         <div class="faq-card">
-          <div class="faq-q">What kinds of places are listed?</div>
-          <div class="faq-a">Four categories: Heritage (forts &amp; palaces), Nature (parks &amp; beaches), Pilgrimage
-            (temples &amp; shrines), and Adventure (treks &amp; hill stations). Each is colour-coded.</div>
+          <button class="faq-q" aria-expanded="false" aria-controls="faq-a5" id="faq-q5" onclick="toggleFaq(this)"><span>What kinds of places are listed?</span><span class="faq-icon" aria-hidden="true">+</span></button>
+          <div class="faq-a" id="faq-a5" role="region" aria-labelledby="faq-q5"><div class="faq-a-inner"><div>Four categories: Heritage (forts &amp; palaces), Nature (parks &amp; beaches), Pilgrimage
+            (temples &amp; shrines), and Adventure (treks &amp; hill stations). Each is colour-coded.</div></div></div>
         </div>
 
         <div class="faq-card">
-          <div class="faq-q">How do I get directions?</div>
-          <div class="faq-a">Open any place's detail panel and tap the <strong>View on map</strong> button. It opens the
-            exact location directly in Google Maps.</div>
+          <button class="faq-q" aria-expanded="false" aria-controls="faq-a6" id="faq-q6" onclick="toggleFaq(this)"><span>How do I get directions?</span><span class="faq-icon" aria-hidden="true">+</span></button>
+          <div class="faq-a" id="faq-a6" role="region" aria-labelledby="faq-q6"><div class="faq-a-inner"><div>Open any place's detail panel and tap the <strong>View on map</strong> button. It opens the
+            exact location directly in Google Maps.</div></div></div>
         </div>
 
         <div class="faq-card">
-          <div class="faq-q">Does it work on mobile?</div>
-          <div class="faq-a">Yes. The site is fully responsive and works on phones, tablets, and desktops. It also
-            supports dark mode automatically.</div>
+          <button class="faq-q" aria-expanded="false" aria-controls="faq-a7" id="faq-q7" onclick="toggleFaq(this)"><span>Does it work on mobile?</span><span class="faq-icon" aria-hidden="true">+</span></button>
+          <div class="faq-a" id="faq-a7" role="region" aria-labelledby="faq-q7"><div class="faq-a-inner"><div>Yes. The site is fully responsive and works on phones, tablets, and desktops. It also
+            supports dark mode automatically.</div></div></div>
         </div>
 
         <div class="faq-card">
-          <div class="faq-q">Can I suggest a new place?</div>
-          <div class="faq-a">Absolutely. If you know a hidden gem or spot wrong info, contact us and we'll review and
-            update it as soon as possible.</div>
+          <button class="faq-q" aria-expanded="false" aria-controls="faq-a8" id="faq-q8" onclick="toggleFaq(this)"><span>Can I suggest a new place?</span><span class="faq-icon" aria-hidden="true">+</span></button>
+          <div class="faq-a" id="faq-a8" role="region" aria-labelledby="faq-q8"><div class="faq-a-inner"><div>Absolutely. If you know a hidden gem or spot wrong info, contact us and we'll review and
+            update it as soon as possible.</div></div></div>
         </div>
 
       </div><!-- /faq-grid -->
@@ -2414,11 +2607,34 @@
 
   <!-- ========================== FOOTER ========================== -->
   <footer class="site-footer">
-    <div class="wrap footer-inner">
+    <div class="wrap footer-grid">
       <div class="footer-brand">
         <span class="wordmark">Travel<span>Bharat</span></span>
-        <p class="footer-tagline">Explore India, one state at a time.</p>
+        <p class="footer-tagline">Explore India, one state at a time. A state-wise directory of Indian tourist places, built for travellers, students, and the curious.</p>
       </div>
+      <nav class="footer-col" aria-label="Explore regions">
+        <div class="footer-head">Explore</div>
+        <button type="button" onclick="scrollToRegion('north')">North India</button>
+        <button type="button" onclick="scrollToRegion('south')">South India</button>
+        <button type="button" onclick="scrollToRegion('west')">West India</button>
+        <button type="button" onclick="scrollToRegion('east')">East &amp; Northeast</button>
+      </nav>
+      <nav class="footer-col" aria-label="Explore categories">
+        <div class="footer-head">Categories</div>
+        <button type="button" onclick="browseCategory('heritage')">Heritage</button>
+        <button type="button" onclick="browseCategory('nature')">Nature</button>
+        <button type="button" onclick="browseCategory('religious')">Pilgrimage</button>
+        <button type="button" onclick="browseCategory('adventure')">Adventure</button>
+      </nav>
+      <nav class="footer-col" aria-label="Useful links">
+        <div class="footer-head">Useful</div>
+        <button type="button" onclick="openWishlist()">My wishlist</button>
+        <button type="button" onclick="openItineraryModal()">Trip planner</button>
+        <button type="button" onclick="goFaq()">FAQ</button>
+        <button type="button" onclick="goFaq()">Suggest a place</button>
+      </nav>
+    </div>
+    <div class="wrap footer-bottom">
       <p class="footer-copy">&copy; 2026 TravelBharat. Made with &#9829; for every traveller in Bharat.</p>
     </div>
   </footer>
@@ -3379,6 +3595,167 @@
       .no-print { display: none !important; }
     }
 
+    /* ---------- Page guards: no horizontal scroll, no white flash ---------- */
+    html { background: var(--paper); color-scheme: light dark; }
+    html, body { overflow-x: clip; }
+    img { max-width: 100%; }
+    :root { color-scheme: light dark; }
+    .skip-link {
+      position: absolute; left: 12px; top: -48px; z-index: 200;
+      background: var(--ink); color: var(--paper); padding: 10px 18px;
+      border-radius: 0 0 6px 6px; font-size: 14px; font-weight: 600; text-decoration: none;
+      transition: top var(--dur-fast) var(--ease);
+    }
+    .skip-link:focus { top: 0; }
+    .region-block, .discover-section, .faq-section { content-visibility: auto; contain-intrinsic-size: auto 600px; }
+    .pc-media img, .gallery-item img, .modal-img img, .state-tile-img img, .gem-card img { animation: tb-img-in 0.45s var(--ease); }
+    @keyframes tb-img-in { from { opacity: 0; } to { opacity: 1; } }
+
+    /* ---------- Toast notifications ---------- */
+    .toast-stack {
+      position: fixed; left: 50%; transform: translateX(-50%); bottom: 22px; z-index: 300;
+      display: flex; flex-direction: column; gap: 8px; align-items: center;
+      width: min(92vw, 420px); pointer-events: none;
+    }
+    .toast {
+      pointer-events: auto;
+      display: flex; align-items: center; gap: 12px;
+      background: var(--ink); color: var(--paper);
+      border-radius: 999px; padding: 10px 10px 10px 20px;
+      font-size: 13.5px; font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      animation: tb-toast-in 0.28s var(--ease);
+      max-width: 100%;
+    }
+    .toast.out { opacity: 0; transform: translateY(8px); transition: opacity 0.22s, transform 0.22s; }
+    .toast-close {
+      border: none; background: rgba(255,255,255,0.16); color: inherit;
+      width: 26px; height: 26px; border-radius: 50%; cursor: pointer; font-size: 15px; line-height: 1;
+      flex-shrink: 0;
+    }
+    .toast-close:hover { background: rgba(255,255,255,0.3); }
+    @keyframes tb-toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+    /* ---------- Category browse / hidden gems / plan trip ---------- */
+    .cat-section, .gems-section, .plan-section { padding: 52px 0; border-bottom: 1px solid var(--line); }
+    .cat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+    .cat-card {
+      text-align: left; cursor: pointer;
+      background: var(--paper); border: 1px solid var(--line);
+      border-top: 3px solid var(--gold); border-radius: var(--radius-md);
+      padding: 20px; display: flex; flex-direction: column; gap: 4px;
+      font-family: 'Work Sans', sans-serif; color: var(--ink);
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--dur-med) var(--ease), box-shadow var(--dur-med) var(--ease);
+    }
+    .cat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .cat-card:active { transform: scale(0.98); }
+    .cat-card-name { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 500; }
+    .cat-card-sub { font-size: 13px; color: var(--ink-soft); }
+    .cat-card-count { font-size: 12px; font-weight: 600; color: var(--gold); margin-top: 6px; }
+    .gems-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+    .gem-card {
+      border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden;
+      background: var(--paper); box-shadow: var(--shadow-sm);
+      transition: transform var(--dur-med) var(--ease), box-shadow var(--dur-med) var(--ease);
+    }
+    .gem-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .gem-card img { width: 100%; height: 150px; object-fit: cover; display: block; }
+    .gem-body { padding: 16px 18px 18px; }
+    .gem-state { font-size: 11.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--gold); }
+    .gem-name { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 500; margin: 4px 0 12px; }
+    .gem-view {
+      border: 1.5px solid var(--ink); background: transparent; color: var(--ink);
+      border-radius: 6px; padding: 9px 20px; min-height: 42px;
+      font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: 'Work Sans', sans-serif;
+      transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+    }
+    .gem-view:hover { background: var(--ink); color: var(--paper); }
+    .plan-banner {
+      background: linear-gradient(135deg, var(--teal-bg), var(--paper-raised));
+      border: 1px solid var(--teal); border-radius: var(--radius-lg);
+      padding: 36px clamp(22px, 4vw, 48px);
+      display: flex; align-items: center; justify-content: space-between; gap: 28px; flex-wrap: wrap;
+      box-shadow: var(--shadow-sm);
+    }
+    .plan-banner > div { flex: 1 1 300px; }
+    .plan-eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal); margin-bottom: 8px; }
+    .plan-banner h2 { font-size: clamp(24px, 3.4vw, 34px); font-weight: 500; margin: 0 0 10px; letter-spacing: -0.01em; }
+    .plan-banner p { color: var(--ink-soft); font-size: 15px; margin: 0 0 14px; max-width: 520px; }
+    .plan-tips { margin: 0; padding-left: 20px; color: var(--ink-soft); font-size: 13.5px; line-height: 1.7; max-width: 520px; }
+    .plan-cta { min-height: 48px; padding: 13px 30px; font-size: 15px; flex-shrink: 0; }
+
+    /* ---------- Card map link + state count ---------- */
+    .pc-map-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--teal);
+      text-decoration: none; border-radius: var(--radius-sm);
+    }
+    .pc-map-link:hover { color: var(--gold); text-decoration: underline; }
+    .state-count { font-size: 13.5px; color: var(--ink-soft); margin: 6px 0 0; }
+
+    /* ---------- FAQ accordion (smooth, accessible) ---------- */
+    .faq-card { padding: 0; overflow: hidden; }
+    .faq-q {
+      width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 14px;
+      background: none; border: none; cursor: pointer; text-align: left;
+      padding: 24px 28px; font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600;
+      color: var(--ink); line-height: 1.3;
+    }
+    .faq-q:hover { color: var(--gold); }
+    .faq-icon {
+      flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+      border: 1.5px solid var(--line-strong); display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 400; color: var(--gold);
+      transition: transform var(--dur-med) var(--ease), background var(--dur-fast) var(--ease);
+    }
+    .faq-q[aria-expanded="true"] .faq-icon { transform: rotate(45deg); background: var(--gold-bg); }
+    .faq-a {
+      display: grid; grid-template-rows: 0fr; visibility: hidden;
+      transition: grid-template-rows var(--dur-med) var(--ease), visibility 0s linear var(--dur-med);
+    }
+    .faq-q[aria-expanded="true"] + .faq-a {
+      grid-template-rows: 1fr; visibility: visible;
+      transition: grid-template-rows var(--dur-med) var(--ease);
+    }
+    .faq-a-inner { overflow: hidden; min-height: 0; padding: 0 28px; }
+    .faq-a-inner > div { padding-bottom: 24px; }
+
+    /* ---------- Footer columns ---------- */
+    .footer-grid {
+      display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 28px;
+      padding-top: 8px; padding-bottom: 8px; text-align: left;
+    }
+    .footer-col { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+    .footer-head { font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+    .footer-col button {
+      background: none; border: none; cursor: pointer; padding: 5px 0;
+      color: rgba(255,255,255,0.72); font-size: 13.5px; font-family: 'Work Sans', sans-serif;
+    }
+    .footer-col button:hover { color: #fff; text-decoration: underline; }
+    .footer-bottom { border-top: 1px solid rgba(255,255,255,0.14); margin-top: 28px; padding-top: 20px; }
+    @media(max-width:760px) {
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media(max-width:420px) {
+      .footer-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ---------- Small-screen touch + overflow pass ---------- */
+    @media (max-width: 640px) {
+      .chip { min-height: 40px; }
+      .trip-stop-btns button { width: 36px; height: 36px; }
+      .cat-grid { grid-template-columns: 1fr 1fr; }
+      .plan-banner { flex-direction: column; align-items: stretch; }
+      .plan-cta { width: 100%; }
+      .toast-stack { bottom: 14px; }
+    }
+    @media (max-width: 360px) {
+      .cat-grid { grid-template-columns: 1fr; }
+      .state-grid { grid-template-columns: 1fr; }
+      .wrap { padding: 0 14px; }
+    }
+
     /* ---------- Responsive: tablet + mobile (no layout breakage) ---------- */
     @media (max-width: 900px) {
       .wrap { padding: 0 22px; }
@@ -3439,6 +3816,34 @@
       }
     }
   </style>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="false"></div>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "TravelBharat",
+    "description": "A free state-by-state field guide to India's tourist places.",
+    "inLanguage": "en"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "What is TravelBharat?", "acceptedAnswer": { "@type": "Answer", "text": "TravelBharat is a free guide to explore India state by state. Find destinations, read about places, check timings and fees, and open them in Google Maps — all in one spot." } },
+      { "@type": "Question", "name": "Is it free to use?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, completely free. No sign-up, no subscription, no hidden charges." } },
+      { "@type": "Question", "name": "How do I find a place or state?", "acceptedAnswer": { "@type": "Answer", "text": "Use the search bar at the top to type any state or destination name. Results show up instantly as you type." } },
+      { "@type": "Question", "name": "When is the best time to visit?", "acceptedAnswer": { "@type": "Answer", "text": "Open any destination card — the detail panel shows the recommended months to visit along with entry fees and timings." } },
+      { "@type": "Question", "name": "What kinds of places are listed?", "acceptedAnswer": { "@type": "Answer", "text": "Four categories: Heritage, Nature, Pilgrimage and Adventure. Each is colour-coded." } },
+      { "@type": "Question", "name": "How do I get directions?", "acceptedAnswer": { "@type": "Answer", "text": "Open any place's detail panel and tap the View on map button. It opens the exact location in Google Maps." } },
+      { "@type": "Question", "name": "Does it work on mobile?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. The site is fully responsive and works on phones, tablets and desktops, with automatic dark mode." } },
+      { "@type": "Question", "name": "Can I suggest a new place?", "acceptedAnswer": { "@type": "Answer", "text": "Absolutely. If you know a hidden gem or spot wrong info, contact us and we will review and update it." } }
+    ]
+  }
+  </script>
 
 </body>
 
