@@ -1591,6 +1591,18 @@
       renderStateView(state);
     }
 
+    /* Shared card helpers: duration is a suggestion derived from category (no data change) */
+    function recommendedDuration(p) {
+      if (p.category === 'heritage') return 'Half day';
+      if (p.category === 'religious') return '2\u20133 hours';
+      if (p.category === 'adventure') return 'Full day';
+      return 'Half\u2013full day';
+    }
+    function cardMedia(state, p) {
+      if (p.img) return `<div class="pc-media"><img src="${p.img}" alt="${p.name}, ${state.name}" loading="lazy" decoding="async" draggable="false"><span class="pc-badge">${catLabel(p.category)}</span></div>`;
+      return `<div class="pc-media pc-media-empty"><span class="pc-badge">${catLabel(p.category)}</span><span class="pc-empty-label">${catLabel(p.category)}</span></div>`;
+    }
+
     function renderPlaces(state) {
       const list = document.getElementById('placeList');
       const places = state.places.filter(p => activeFilter === 'all' || p.category === activeFilter);
@@ -1601,17 +1613,22 @@
         const inTrip = itinerary.has(state.slug + '|' + realIdx);
         return `
     <div class="place-card" style="--cat-color:${catColor(p.category)}" onclick="openPlace('${state.slug}', ${realIdx}, true)">
-      <button class="wish-btn ${isWish ? 'active' : ''}" onclick="event.stopPropagation(); toggleWish('${state.slug}', ${realIdx}, this)" aria-label="Save to wishlist">
+      <button class="wish-btn ${isWish ? 'active' : ''}" onclick="event.stopPropagation(); toggleWish('${state.slug}', ${realIdx}, this)" aria-label="Save ${p.name} to wishlist" aria-pressed="${isWish}">
         ${isWish ? '\u2605' : ' \u2606'}
       </button>
-      ${p.img ? `<img src="${p.img}" alt="${p.name}" loading="lazy" style="width:100%;height:130px;object-fit:cover;">`
-            : `<div class="placeholder">${catLabel(p.category)}</div>`}
+      ${cardMedia(state, p)}
       <div class="place-card-body">
-        <div class="cat-label">${catLabel(p.category)}</div>
+        <div class="cat-label">${catLabel(p.category)} &middot; ${state.name}</div>
         <h4>${p.name}</h4>
-        <p>${p.desc}</p>
+        <p class="pc-desc">${p.desc}</p>
+        <dl class="pc-meta">
+          <div><dt>Best time</dt><dd>${p.best}</dd></div>
+          <div><dt>Duration</dt><dd>Suggested: ${recommendedDuration(p)}</dd></div>
+          <div><dt>Entry</dt><dd>${p.fee}</dd></div>
+        </dl>
       </div>
       <div class="place-card-actions">
+        <button class="pc-details-btn" type="button" onclick="event.stopPropagation(); openPlace('${state.slug}', ${realIdx}, true)">View details</button>
         <button class="it-add-btn ${inTrip ? 'added' : ''}" type="button" onclick="event.stopPropagation(); toggleItinerary('${state.slug}', ${realIdx}, this)" aria-pressed="${inTrip}">${inTrip ? '\u2713 Added to trip' : '+ Add to trip'}</button>
         <a class="mmt-card-btn" href="${mmtLink(state, p)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" aria-label="Book a trip to ${p.name} on MakeMyTrip">&#x1F9F3; Book on MakeMyTrip</a>
       </div>
@@ -1841,15 +1858,22 @@
         const inTrip = canTrip && itinerary.has(key);
         return `
       <div class="place-card" style="--cat-color:${catColor(place.category)}" onclick="openPlace('${state.slug}', ${idx}, true)">
-        <button class="wish-btn ${isWish ? 'active' : ''}" type="button" onclick="event.stopPropagation(); toggleWish('${state.slug}', ${idx}, this)" aria-label="Save to wishlist">${isWish ? '\u2605' : ' \u2606'}</button>
-        ${place.img ? `<img src="${place.img}" alt="${place.name}" loading="lazy" style="width:100%;height:130px;object-fit:cover;">` : `<div class="placeholder">${catLabel(place.category)}</div>`}
+        <button class="wish-btn ${isWish ? 'active' : ''}" type="button" onclick="event.stopPropagation(); toggleWish('${state.slug}', ${idx}, this)" aria-label="Save ${place.name} to wishlist" aria-pressed="${isWish}">${isWish ? '\u2605' : ' \u2606'}</button>
+        ${cardMedia(state, place)}
         <div class="place-card-body">
           <div class="cat-label">${catLabel(place.category)} &middot; ${state.name}</div>
           <h4>${place.name}</h4>
-          <p>${place.desc}</p>
+          <p class="pc-desc">${place.desc}</p>
+          <dl class="pc-meta">
+            <div><dt>Best time</dt><dd>${place.best}</dd></div>
+            <div><dt>Duration</dt><dd>Suggested: ${recommendedDuration(place)}</dd></div>
+            <div><dt>Entry</dt><dd>${place.fee}</dd></div>
+          </dl>
         </div>
         <div class="place-card-actions">
+          <button class="pc-details-btn" type="button" onclick="event.stopPropagation(); openPlace('${state.slug}', ${idx}, true)">View details</button>
           <button class="it-add-btn ${inTrip ? 'added' : ''}" type="button" onclick="event.stopPropagation(); toggleItinerary('${state.slug}', ${idx}, this)" aria-pressed="${inTrip}">${inTrip ? '\u2713 Added to trip' : '+ Add to trip'}</button>
+          <a class="mmt-card-btn" href="${mmtLink(state, place)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" aria-label="Book a trip to ${place.name} on MakeMyTrip">&#x1F9F3; Book on MakeMyTrip</a>
         </div>
       </div>`;
       }).join('') + (list.length > 24 ? `<div class="discover-empty">Showing 24 of ${list.length} — narrow filters to see more specific picks.</div>` : '');
@@ -3040,6 +3064,55 @@
       .discover-panel { grid-template-columns: 1fr 1fr; padding: 16px; }
     }
     @media (max-width: 420px) { .discover-panel { grid-template-columns: 1fr; } }
+
+    /* ---------- Destination cards: media, meta, actions ---------- */
+    .pc-media { position: relative; overflow: hidden; aspect-ratio: 16 / 10; background: var(--line); }
+    .pc-media img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      transition: transform 0.5s var(--ease); filter: saturate(0.96);
+    }
+    .place-card:hover .pc-media img { transform: scale(1.05); }
+    .pc-media-empty {
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, var(--gold-bg), var(--paper-raised));
+      border-bottom: 1px solid var(--line); aspect-ratio: 16 / 10;
+    }
+    .pc-empty-label {
+      font-family: 'Fraunces', serif; font-size: 13px; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--gold);
+    }
+    .pc-badge {
+      position: absolute; left: 12px; bottom: 12px; z-index: 1;
+      background: rgba(10,10,12,0.72); color: #fff;
+      font-size: 10.5px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase;
+      padding: 5px 11px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.28);
+    }
+    .pc-desc {
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden; margin-bottom: 0;
+    }
+    .pc-meta {
+      display: grid; gap: 7px; margin: 14px 0 0; padding: 12px 0 0;
+      border-top: 1px solid var(--line);
+    }
+    .pc-meta div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 12.5px; line-height: 1.45; }
+    .pc-meta dt { color: var(--ink-soft); font-weight: 500; white-space: nowrap; }
+    .pc-meta dd { margin: 0; font-weight: 600; text-align: right; }
+    .pc-details-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 100%; padding: 10px 14px; border-radius: 6px;
+      font-family: 'Work Sans', sans-serif; font-size: 13.5px; font-weight: 600;
+      cursor: pointer; background: var(--ink); color: var(--paper);
+      border: 1.5px solid var(--ink);
+      transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+    }
+    .pc-details-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); filter: brightness(1.08); }
+    .pc-details-btn:active { transform: scale(0.98); }
+    .place-card .wish-btn { z-index: 2; }
+    @media (max-width: 640px) {
+      .pc-meta div { font-size: 12px; }
+    }
 
     /* ---------- Responsive: tablet + mobile (no layout breakage) ---------- */
     @media (max-width: 900px) {
