@@ -1507,7 +1507,7 @@
         </div>
         <div style="display:flex;align-items:center;gap:12px;">
           <div class="it-count" id="itineraryCount">0 places selected</div>
-          <button class="itinerary-btn" id="generateItineraryBtn" disabled>Generate itinerary</button>
+          <button class="itinerary-btn" id="generateItineraryBtn" type="button" onclick="openItineraryModal()" disabled>Generate itinerary</button>
         </div>
       </div>
       <div class="place-list" id="placeList"></div>
@@ -1529,9 +1529,11 @@
       list.innerHTML = places.map((p, i) => {
         const key = state.slug + '|' + i;
         const isWish = wishlist.has(key);
+        const realIdx = state.places.indexOf(p);
+        const inTrip = itinerary.has(state.slug + '|' + realIdx);
         return `
-    <div class="place-card" style="--cat-color:${catColor(p.category)}" onclick="openPlace('${state.slug}', ${state.places.indexOf(p)}, true)">
-      <button class="wish-btn ${isWish ? 'active' : ''}" onclick="event.stopPropagation(); toggleWish('${state.slug}', ${state.places.indexOf(p)}, this)" aria-label="Save to wishlist">
+    <div class="place-card" style="--cat-color:${catColor(p.category)}" onclick="openPlace('${state.slug}', ${realIdx}, true)">
+      <button class="wish-btn ${isWish ? 'active' : ''}" onclick="event.stopPropagation(); toggleWish('${state.slug}', ${realIdx}, this)" aria-label="Save to wishlist">
         ${isWish ? '\u2605' : ' \u2606'}
       </button>
       ${p.img ? `<img src="${p.img}" alt="${p.name}" loading="lazy" style="width:100%;height:130px;object-fit:cover;">`
@@ -1542,6 +1544,7 @@
         <p>${p.desc}</p>
       </div>
       <div class="place-card-actions">
+        <button class="it-add-btn ${inTrip ? 'added' : ''}" type="button" onclick="event.stopPropagation(); toggleItinerary('${state.slug}', ${realIdx}, this)" aria-pressed="${inTrip}">${inTrip ? '\u2713 Added to trip' : '+ Add to trip'}</button>
         <a class="mmt-card-btn" href="${mmtLink(state, p)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" aria-label="Book a trip to ${p.name} on MakeMyTrip">&#x1F9F3; Book on MakeMyTrip</a>
       </div>
     </div>`;
@@ -1662,10 +1665,10 @@
       const key = stateSlug + '|' + idx;
       if (wishlist.has(key)) {
         wishlist.delete(key);
-        btnEl.classList.remove('active');
+        if (btnEl) { btnEl.classList.remove('active'); btnEl.innerHTML = ' \u2606'; }
       } else {
         wishlist.add(key);
-        btnEl.classList.add('active');
+        if (btnEl) { btnEl.classList.add('active'); btnEl.innerHTML = '\u2605'; }
       }
       updateWishCount();
       // Persist
@@ -1693,7 +1696,7 @@
       if (generateBtn) generateBtn.disabled = count === 0;
     }
 
-    function toggleItinerary(stateSlug, idx) {
+    function toggleItinerary(stateSlug, idx, btnEl) {
       const key = stateSlug + '|' + idx;
       if (itinerary.has(key)) {
         itinerary.delete(key);
@@ -1701,6 +1704,12 @@
         itinerary.add(key);
       }
       updateItineraryUI();
+      if (btnEl) {
+        const added = itinerary.has(key);
+        btnEl.classList.toggle('added', added);
+        btnEl.setAttribute('aria-pressed', added ? 'true' : 'false');
+        btnEl.textContent = added ? '\u2713 Added to trip' : '+ Add to trip';
+      }
     }
 
     function openItineraryModal() {
@@ -2547,6 +2556,275 @@
 
       .wl-remove {
         flex: 1 1 100%;
+      }
+    }
+  </style>
+
+  <style id="premium-polish">
+    /* ============================================================
+       TravelBharat — Premium UI polish layer (10/10 pass)
+       Keeps existing identity: same colors, fonts, layout.
+       Only refines spacing, depth, states, motion, responsiveness.
+       ============================================================ */
+    :root {
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 3px rgba(20, 23, 31, 0.08), 0 1px 2px rgba(20, 23, 31, 0.06);
+      --shadow-md: 0 4px 14px rgba(20, 23, 31, 0.10), 0 2px 6px rgba(20, 23, 31, 0.06);
+      --shadow-lg: 0 18px 48px rgba(20, 23, 31, 0.22), 0 4px 14px rgba(20, 23, 31, 0.10);
+      --ease: cubic-bezier(0.22, 0.61, 0.21, 1);
+      --dur-fast: 0.15s;
+      --dur-med: 0.25s;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { text-rendering: optimizeLegibility; overflow-x: hidden; }
+    img { -webkit-user-drag: none; }
+
+    /* Consistent focus — accessible but on-brand */
+    :where(a, button, input, [tabindex]):focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 3px;
+      border-radius: var(--radius-sm);
+    }
+
+    /* ---------- Header ---------- */
+    header { backdrop-filter: saturate(1.1); }
+    header .bar { padding: 16px 0; }
+    .wordmark { letter-spacing: -0.02em; line-height: 1; }
+    .search-shell input {
+      border-radius: var(--radius-md);
+      padding: 11px 14px;
+      box-shadow: inset 0 1px 2px rgba(20,23,31,0.05);
+      transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+    }
+    .search-shell input:hover { border-color: var(--gold); }
+    .search-shell input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(169, 120, 47, 0.18);
+    }
+    .search-results {
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      animation: tb-fade-slide var(--dur-med) var(--ease);
+    }
+    .search-results .sr-item { transition: background var(--dur-fast) var(--ease); }
+
+    /* ---------- Hero ---------- */
+    .hero h1 { letter-spacing: -0.02em; text-wrap: balance; }
+    .hero p { line-height: 1.6; text-wrap: pretty; }
+    .region-jump button {
+      border-radius: 999px;
+      padding: 9px 18px;
+      font-weight: 500;
+      transition: border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+    }
+    .region-jump button:hover { transform: translateY(-1px); }
+    .region-jump button:active { transform: translateY(0) scale(0.97); }
+
+    /* ---------- Gallery ---------- */
+    .gallery-item {
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--dur-med) var(--ease), box-shadow var(--dur-med) var(--ease);
+    }
+    .gallery-item:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .gallery-item:active { transform: translateY(-1px) scale(0.99); }
+
+    /* ---------- Region / state tiles ---------- */
+    .region-head h2 { letter-spacing: -0.01em; }
+    .state-tile {
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--dur-med) var(--ease), box-shadow var(--dur-med) var(--ease), background var(--dur-fast) var(--ease);
+    }
+    .state-tile:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .state-tile:active { transform: translateY(-1px); }
+    .state-tile-img img { transition: transform 0.5s var(--ease); }
+    .state-tile:hover .state-tile-img img { transform: scale(1.04); }
+    .state-tile h3 { letter-spacing: -0.01em; }
+
+    /* ---------- Chips / back link ---------- */
+    .chip {
+      border-radius: 999px;
+      transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+    }
+    .chip:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-1px); }
+    .chip:active { transform: scale(0.96); }
+    .chip.active { box-shadow: var(--shadow-sm); }
+    .back-link {
+      border-radius: var(--radius-sm);
+      padding: 6px 8px;
+      margin-left: -8px;
+      transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+    }
+    .back-link:hover { background: var(--gold-bg); }
+
+    /* ---------- Place cards (premium) ---------- */
+    .place-card {
+      border-radius: var(--radius-md) !important;
+      border: 1px solid var(--line) !important;
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--dur-med) var(--ease), box-shadow var(--dur-med) var(--ease), border-color var(--dur-fast) var(--ease);
+      position: relative;
+    }
+    .place-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--line-strong) !important;
+    }
+    .place-card:active { transform: translateY(-2px); }
+    .place-card h4 { letter-spacing: -0.01em; line-height: 1.25; }
+    .place-card-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .it-add-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-family: 'Work Sans', sans-serif;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      background: transparent;
+      color: var(--teal);
+      border: 1.5px dashed var(--teal);
+      transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+    }
+    .it-add-btn:hover { background: var(--teal-bg); transform: translateY(-1px); }
+    .it-add-btn:active { transform: scale(0.98); }
+    .it-add-btn.added {
+      background: var(--teal);
+      color: #fff;
+      border-style: solid;
+    }
+
+    /* ---------- Wishlist star ---------- */
+    .wish-btn {
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+    }
+    .wish-btn:active { transform: scale(0.90); }
+    .wish-btn.active { animation: tb-pop 0.25s var(--ease); }
+
+    /* ---------- Itinerary banner ---------- */
+    .itinerary-banner { border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
+    .itinerary-btn {
+      border-radius: 6px;
+      box-shadow: var(--shadow-sm);
+      transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease);
+    }
+    .itinerary-btn:not(:disabled):hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+    .itinerary-btn:not(:disabled):active { transform: scale(0.97); }
+    .itinerary-btn:disabled { opacity: 0.55; }
+
+    /* ---------- Unified booking buttons ---------- */
+    .btn-row .map-btn, .btn-row .book-btn, .mmt-card-btn, .wl-view, .wl-book, .wl-remove {
+      transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease) !important;
+    }
+    .btn-row .map-btn:active, .btn-row .book-btn:active, .mmt-card-btn:active, .wl-view:active, .wl-book:active {
+      transform: scale(0.97);
+    }
+
+    /* ---------- Modals ---------- */
+    .modal-overlay, .wishlist-modal, .itinerary-modal {
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .modal-overlay.open, .wishlist-modal.open, .itinerary-modal.open {
+      animation: tb-overlay-in 0.25s var(--ease);
+    }
+    .modal, .wl-inner, .itinerary-modal .it-inner {
+      border-radius: var(--radius-lg) !important;
+      box-shadow: var(--shadow-lg) !important;
+    }
+    .modal-overlay.open .modal, .wishlist-modal.open .wl-inner, .itinerary-modal.open .it-inner {
+      animation: tb-modal-in 0.32s var(--ease);
+    }
+    .modal-close, .wl-close, .itinerary-modal .it-close {
+      transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease) !important;
+    }
+    .modal-close:hover, .wl-close:hover, .itinerary-modal .it-close:hover { transform: scale(1.06); }
+    .modal-close:active, .wl-close:active, .itinerary-modal .it-close:active { transform: scale(0.94); }
+    .fact-grid { gap: 18px 28px; }
+    .nearby-item { border-radius: var(--radius-sm); transition: color var(--dur-fast) var(--ease), padding-left var(--dur-fast) var(--ease); }
+    .nearby-item:hover { padding-left: 6px; }
+
+    /* ---------- FAQ / footer ---------- */
+    .faq-card { border-radius: var(--radius-md); }
+    .faq-card:hover { transform: translateY(-2px); }
+    .site-footer .wordmark { cursor: default; }
+
+    @keyframes tb-overlay-in { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes tb-modal-in { from { opacity: 0; transform: translateY(18px) scale(0.98); } to { opacity: 1; transform: none; } }
+    @keyframes tb-fade-slide { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+    @keyframes tb-pop { 0% { transform: scale(0.85); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
+
+    /* ---------- Responsive: tablet + mobile (no layout breakage) ---------- */
+    @media (max-width: 900px) {
+      .wrap { padding: 0 22px; }
+      .hero { padding: 64px 0 56px; }
+      .region-block, .gallery-section { padding: 40px 0; }
+      .state-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+      .place-list { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+      .modal .cat-label, .modal h3, .modal .loc-line, .modal p.desc,
+      .modal .fact-grid, .modal .map-btn, .modal .nearby, .modal .btn-row {
+        margin-left: 28px; margin-right: 28px;
+      }
+    }
+    @media (max-width: 640px) {
+      header .bar { flex-wrap: wrap; padding: 14px 0; gap: 12px; }
+      .wordmark { font-size: 20px; }
+      .search-shell { order: 3; flex-basis: 100%; max-width: none; }
+      .header-wish { margin-left: auto; }
+      .hero { padding: 48px 0 40px; }
+      .hero h1 { font-size: clamp(26px, 7vw, 34px); }
+      .hero p { font-size: 15.5px; }
+      .state-grid { grid-template-columns: 1fr 1fr; gap: 0; }
+      .state-tile-body { padding: 16px 14px; }
+      .state-tile-img { height: 100px; }
+      .state-tile h3 { font-size: 16px; }
+      .state-tile .tag { font-size: 12.5px; }
+      .region-head h2 { font-size: 22px; }
+      .modal { margin: 0; }
+      .modal-img { height: 200px; }
+      .modal .cat-label, .modal h3, .modal .loc-line, .modal p.desc,
+      .modal .fact-grid, .modal .map-btn, .modal .nearby, .modal .btn-row {
+        margin-left: 22px; margin-right: 22px;
+      }
+      .modal h3 { font-size: 24px; }
+      .modal-overlay { padding: 20px 12px; align-items: flex-end; }
+      .modal-overlay.open { align-items: center; }
+      .itinerary-banner { flex-direction: column; align-items: flex-start; }
+      .faq-section { padding: 64px 0 56px; }
+    }
+    @media (max-width: 420px) {
+      .wrap { padding: 0 16px; }
+      .state-grid { grid-template-columns: 1fr; }
+      .gallery-grid { grid-template-columns: 1fr 1fr; }
+      .region-jump button { padding: 8px 14px; font-size: 12.5px; }
+      .chip-row { gap: 6px; }
+      .chip { padding: 6px 12px; font-size: 12.5px; }
+    }
+
+    /* ---------- Reduced motion: calm, professional ---------- */
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: 0.001s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001s !important;
+      }
+      .gallery-item:hover img, .state-tile:hover .state-tile-img img, .place-card:hover, .state-tile:hover {
+        transform: none !important;
       }
     }
   </style>
