@@ -1992,6 +1992,11 @@
       if (generateBtn) generateBtn.disabled = count === 0;
     }
 
+    let tripPace = 3; // places per day: user-controlled, no auto changes
+    let _tripClearTimer = null;
+    const TRIP_SLOTS = ['Morning', 'Afternoon', 'Evening', 'Late evening'];
+    const TRIP_HOURS = { 'Half day': 4, '2\u20133 hours': 2.5, 'Full day': 7, 'Half\u2013full day': 5 };
+
     function toggleItinerary(stateSlug, idx, btnEl) {
       const key = stateSlug + '|' + idx;
       if (itinerary.has(key)) {
@@ -2008,6 +2013,58 @@
       }
     }
 
+    function tripStopMapsUrl(stateName, place) {
+      return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(place.map || (place.name + ', ' + stateName));
+    }
+    function tripStopHours(place) {
+      return TRIP_HOURS[recommendedDuration(place)] || 4;
+    }
+    function syncTripButtons() {
+      const view = document.getElementById('stateView');
+      if (view && view.classList.contains('active') && currentStateSlug) {
+        const st = DATA.states.find(s => s.slug === currentStateSlug);
+        if (st) renderPlaces(st);
+      }
+      const disc = document.getElementById('discoverResults');
+      if (disc && document.getElementById('discover') && document.getElementById('discover').style.display !== 'none') {
+        try { applyDiscoverFilters(); } catch (e) { }
+      }
+    }
+    function setTripPace(val) {
+      tripPace = Math.min(4, Math.max(2, parseInt(val, 10) || 3));
+      openItineraryModal();
+    }
+    function moveItinerary(key, dir) {
+      const arr = [...itinerary];
+      const i = arr.indexOf(key);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= arr.length) return;
+      const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+      itinerary.clear();
+      arr.forEach(k => itinerary.add(k));
+      openItineraryModal();
+    }
+    function removeItineraryStop(key) {
+      itinerary.delete(key);
+      updateItineraryUI();
+      syncTripButtons();
+      openItineraryModal();
+    }
+    function clearItinerary() {
+      const btn = document.getElementById('tripClearBtn');
+      if (btn && btn.dataset.armed !== '1') {
+        btn.dataset.armed = '1';
+        btn.textContent = 'Tap again to clear';
+        clearTimeout(_tripClearTimer);
+        _tripClearTimer = setTimeout(() => { btn.dataset.armed = ''; btn.textContent = 'Clear trip'; }, 3000);
+        return;
+      }
+      itinerary.clear();
+      updateItineraryUI();
+      syncTripButtons();
+      openItineraryModal();
+    }
+
     function openItineraryModal() {
       const modal = document.getElementById('itineraryModal');
       const titleEl = document.getElementById('itineraryTitle');
@@ -2016,77 +2073,128 @@
 
       if (itinerary.size === 0) {
         titleEl.textContent = 'Your Trip Plan';
-        metaEl.textContent = 'No places selected yet. Browse states and tap the "+" icon on places to add them to your itinerary.';
-        bodyEl.innerHTML = '<div class="itinerary-empty">Start building your trip by selecting places from different states.</div>';
+        metaEl.textContent = 'No places selected yet.';
+        bodyEl.innerHTML = `<div class="it-empty">
+          <p>Browse states and tap <strong>+ Add to trip</strong> on places to build your day-by-day plan here.</p>
+          <button class="wl-view" type="button" onclick="closeItineraryModal(); goHome();">Start exploring</button>
+        </div>`;
         modal.classList.add('open');
         return;
       }
 
-      // Group by state
-      const byState = {};
+      // Insertion order = user order. Chunk into days by chosen pace (no reshuffling).
+      const stops = [];
       itinerary.forEach(key => {
         const [slug, idxStr] = key.split('|');
-        const idx = parseInt(idxStr, 10);
-        if (!byState[slug]) byState[slug] = [];
-        byState[slug].push({ stateSlug: slug, placeIdx: idx });
-      });
-
-      // Generate simple day-by-day plan (max 3 places per day)
-      const days = [];
-      let dayNum = 1;
-      let currentDay = [];
-
-      // Flatten all selected places with state info
-      const allPlaces = [];
-      Object.entries(byState).forEach(([slug, items]) => {
         const state = DATA.states.find(s => s.slug === slug);
-        if (state) {
-          items.forEach(item => {
-            allPlaces.push({
-              state: state.name,
-              place: state.places[item.placeIdx]
-            });
-          });
-        }
+        const place = state && state.places[parseInt(idxStr, 10)];
+        if (state && place) stops.push({ key, slug, state, place });
       });
-
-      // Sort by state for better grouping
-      allPlaces.sort((a, b) => a.state.localeCompare(b.state));
-
-      allPlaces.forEach((item, i) => {
-        if (currentDay.length >= 3 || (i > 0 && item.state !== allPlaces[i - 1].state)) {
-          if (currentDay.length > 0) days.push([...currentDay]);
-          currentDay = [];
-          dayNum++;
-        }
-        currentDay.push(item);
+      const days = [];
+      stops.forEach(s => {
+        if (!days.length || days[days.length - 1].length >= tripPace) days.push([]);
+        days[days.length - 1].push(s);
       });
-
-      if (currentDay.length > 0) days.push(currentDay);
+      const stateCount = new Set(stops.map(s => s.slug)).size;
+      const totalHrs = stops.reduce((a, s) => a + tripStopHours(s.place), 0);
 
       titleEl.textContent = `Your ${days.length}-Day Trip Plan`;
-      metaEl.textContent = `${itinerary.size} places selected across ${Object.keys(byState).length} states`;
+      metaEl.textContent = `${stops.length} place${stops.length !== 1 ? 's' : ''} \u00B7 ${days.length} day${days.length !== 1 ? 's' : ''} \u00B7 ${stateCount} state${stateCount !== 1 ? 's' : ''} \u00B7 \u2248${Math.round(totalHrs)}h planned`;
 
-      bodyEl.innerHTML = days.map((day, dayIndex) => `
-    <div class="it-day">
-      <div class="it-day-head">
-        <div class="day-num">${dayIndex + 1}</div>
-        <div>Day ${dayIndex + 1}</div>
-      </div>
-      ${day.map(p => `
-        <div class="it-stop">
-          <div class="stop-name">${p.place.name}</div>
-          <div class="stop-cat">${catLabel(p.place.category)} \u2022 ${p.state}</div>
-        </div>
-      `).join('')}
+      bodyEl.innerHTML = `
+    <div class="trip-toolbar no-print">
+      <label class="trip-pace">Pace
+        <select onchange="setTripPace(this.value)" aria-label="Places per day">
+          <option value="2"${tripPace === 2 ? ' selected' : ''}>Relaxed (2/day)</option>
+          <option value="3"${tripPace === 3 ? ' selected' : ''}>Classic (3/day)</option>
+          <option value="4"${tripPace === 4 ? ' selected' : ''}>Packed (4/day)</option>
+        </select>
+      </label>
+      <button class="trip-tool" id="tripClearBtn" type="button" onclick="clearItinerary()">Clear trip</button>
+      <button class="trip-tool" type="button" onclick="printItinerary()">Print</button>
+      <button class="trip-tool" type="button" onclick="downloadItinerary(this)">Download</button>
+      <button class="trip-tool" type="button" onclick="shareItinerary(this)">Share</button>
     </div>
-  `).join('');
+    <div class="trip-tips"><span class="k">Good to know</span> Start early for the big sights, and reconfirm timings the evening before — shrines and parks often close midday or weekly.</div>
+    ${days.map((day, di) => {
+        const dayHrs = day.reduce((a, s) => a + tripStopHours(s.place), 0);
+        return `
+      <div class="it-day">
+        <div class="it-day-head">
+          <div class="day-num">${di + 1}</div>
+          <div>Day ${di + 1} <span class="it-day-hrs">\u2248${Math.round(dayHrs)}h</span></div>
+        </div>
+        ${day.map((s, si) => `
+          <div class="it-stop trip-stop">
+            <span class="trip-slot">${TRIP_SLOTS[Math.min(si, TRIP_SLOTS.length - 1)]}</span>
+            <div class="trip-stop-main">
+              <div class="stop-name">${s.place.name}</div>
+              <div class="stop-cat">${catLabel(s.place.category)} \u2022 ${s.state.name} \u2022 ${recommendedDuration(s.place)}</div>
+              <a class="trip-map" href="${tripStopMapsUrl(s.state.name, s.place)}" target="_blank" rel="noopener">View on Google Maps</a>
+            </div>
+            <div class="trip-stop-btns no-print">
+              <button type="button" onclick="moveItinerary('${s.key}', -1)" aria-label="Move ${s.place.name} earlier"${si === 0 && di === 0 ? ' disabled' : ''}>\u2191</button>
+              <button type="button" onclick="moveItinerary('${s.key}', 1)" aria-label="Move ${s.place.name} later"${si === day.length - 1 && di === days.length - 1 ? ' disabled' : ''}>\u2193</button>
+              <button type="button" onclick="removeItineraryStop('${s.key}')" aria-label="Remove ${s.place.name} from trip">&times;</button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+      }).join('')}`;
 
       modal.classList.add('open');
     }
 
+    function itineraryText() {
+      const stops = [];
+      itinerary.forEach(key => {
+        const [slug, idxStr] = key.split('|');
+        const state = DATA.states.find(s => s.slug === slug);
+        const place = state && state.places[parseInt(idxStr, 10)];
+        if (state && place) stops.push({ state, place });
+      });
+      const days = [];
+      stops.forEach(s => {
+        if (!days.length || days[days.length - 1].length >= tripPace) days.push([]);
+        days[days.length - 1].push(s);
+      });
+      let out = `TravelBharat Trip Plan (${stops.length} places, ${days.length} days)\n\n`;
+      days.forEach((day, di) => {
+        out += `Day ${di + 1}\n`;
+        day.forEach((s, si) => {
+          out += `  ${TRIP_SLOTS[Math.min(si, 3)]}: ${s.place.name} (${s.state.name}, ${catLabel(s.place.category)}) — ${recommendedDuration(s.place)}\n`;
+          out += `    Map: ${tripStopMapsUrl(s.state.name, s.place)}\n`;
+        });
+        out += `\n`;
+      });
+      return out;
+    }
+    function printItinerary() { window.print(); }
+    function downloadItinerary(btn) {
+      try {
+        const blob = new Blob([itineraryText()], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'travelbharat-itinerary.txt';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+        if (btn) { const t = btn.textContent; btn.textContent = 'Saved!'; setTimeout(() => { btn.textContent = t; }, 1600); }
+      } catch (e) { }
+    }
+    function shareItinerary(btn) {
+      const text = itineraryText();
+      const done = (msg) => { if (btn) { const t = btn.textContent; btn.textContent = msg; setTimeout(() => { btn.textContent = t; }, 1600); } };
+      if (navigator.share) {
+        navigator.share({ title: 'My TravelBharat Trip', text }).catch(() => { });
+      } else if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => done('Copied!')).catch(() => done('Copy failed'));
+      } else { done('Share unavailable'); }
+    }
+
     function closeItineraryModal() {
       document.getElementById('itineraryModal').classList.remove('open');
+      const btn = document.getElementById('tripClearBtn');
+      if (btn) { btn.dataset.armed = ''; btn.textContent = 'Clear trip'; }
     }
 
     // ==== MY WISHLIST PANEL ====
@@ -3216,6 +3324,60 @@
     .wl-actions .wl-trip { min-height: 38px; font-size: 13px; padding: 8px 14px; }
     .wl-empty { animation: tb-fade-slide var(--dur-med) var(--ease); }
     .wl-empty .wl-view { margin-top: 6px; min-height: 44px; padding: 10px 22px; }
+
+    /* ---------- Itinerary: toolbar, slots, stops, print ---------- */
+    .trip-toolbar {
+      display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px;
+      margin-bottom: 16px; padding: 12px 14px;
+      border: 1px solid var(--line); border-radius: var(--radius-md);
+      background: var(--paper);
+    }
+    .trip-pace { font-size: 12.5px; font-weight: 600; color: var(--ink-soft); display: inline-flex; align-items: center; gap: 8px; }
+    .trip-pace select {
+      font-family: 'Work Sans', sans-serif; font-size: 13px; color: var(--ink);
+      background: var(--paper-raised); border: 1px solid var(--line-strong);
+      border-radius: 6px; padding: 7px 10px; cursor: pointer;
+    }
+    .trip-tool {
+      border: 1px solid var(--line-strong); background: transparent; color: var(--ink);
+      border-radius: 999px; padding: 7px 15px; font-size: 12.5px; font-weight: 600;
+      cursor: pointer; font-family: 'Work Sans', sans-serif;
+      transition: border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+    }
+    .trip-tool:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-1px); }
+    .trip-tool:active { transform: scale(0.96); }
+    .trip-tips {
+      font-size: 13px; color: var(--ink-soft); line-height: 1.6;
+      border-left: 3px solid var(--teal); padding: 2px 0 2px 14px; margin-bottom: 18px;
+    }
+    .trip-tips .k { font-size: 11.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--teal); display: block; margin-bottom: 2px; }
+    .it-day-hrs { font-size: 12px; color: var(--ink-soft); font-weight: 400; }
+    .trip-stop { gap: 12px; }
+    .trip-slot {
+      flex-shrink: 0; font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--teal); background: var(--teal-bg); border-radius: 999px; padding: 4px 10px;
+      align-self: flex-start; margin-top: 2px; white-space: nowrap;
+    }
+    .trip-stop-main { flex: 1; min-width: 0; }
+    .trip-map { font-size: 12.5px; color: var(--teal); font-weight: 600; }
+    .trip-map:hover { color: var(--gold); }
+    .trip-stop-btns { display: flex; gap: 6px; flex-shrink: 0; }
+    .trip-stop-btns button {
+      width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+      border: 1px solid var(--line-strong); background: transparent; color: var(--ink-soft);
+      font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center;
+      transition: border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+    }
+    .trip-stop-btns button:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+    .trip-stop-btns button:disabled { opacity: 0.35; cursor: not-allowed; }
+    .it-empty { text-align: center; padding: 28px 12px; color: var(--ink-soft); font-size: 14px; }
+    .it-empty .wl-view { margin-top: 12px; }
+    @media print {
+      body > *:not(.itinerary-modal) { display: none !important; }
+      .itinerary-modal { position: static !important; display: block !important; background: none !important; padding: 0 !important; }
+      .itinerary-modal .it-inner { max-height: none !important; overflow: visible !important; box-shadow: none !important; }
+      .no-print { display: none !important; }
+    }
 
     /* ---------- Responsive: tablet + mobile (no layout breakage) ---------- */
     @media (max-width: 900px) {
