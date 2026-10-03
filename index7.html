@@ -1131,7 +1131,7 @@
   <footer>TravelBharat a state-wise directory of Indian tourist places, built for travellers, students, and the
     curious.</footer>
 
-  <div class="modal-overlay" id="modalOverlay">
+  <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal" id="modalBody"></div>
   </div>
 
@@ -1636,6 +1636,32 @@
       }).join('');
     }
 
+    /* Generic, honest travel tips derived from category + data (no invented facts) */
+    function travelTips(p) {
+      const tips = [];
+      if (p.category === 'heritage') tips.push('Wear comfortable walking shoes — forts involve climbs and uneven steps.', 'Carry water; shade is limited inside large complexes.');
+      else if (p.category === 'nature') tips.push('Start early for the best light and smaller crowds.', 'Check seasonal closures before going — many parks shut in monsoon.');
+      else if (p.category === 'religious') tips.push('Dress modestly and confirm shrine timings — midday closures are common.', 'Footwear rules apply at most sanctuaries; socks help.');
+      else tips.push('Check road and weather status on the day — mountain routes change fast.', 'Carry layers; temperatures swing sharply by altitude and sun.');
+      if (/permit/i.test(p.best)) tips.push('A permit is mentioned for this area — arrange it at least a day ahead.');
+      return tips.slice(0, 3);
+    }
+
+    let _modalLastFocus = null;
+    function onStarToggle(stateSlug, idx) {
+      const textBtn = document.getElementById('modalWishTextBtn');
+      toggleWishText(stateSlug, idx, textBtn || document.createElement('button'));
+    }
+    function toggleWishText(stateSlug, idx, btn) {
+      const star = document.getElementById('modalWishBtn');
+      toggleWish(stateSlug, idx, star || btn);
+      const added = wishlist.has(stateSlug + '|' + idx);
+      btn.classList.toggle('added', added);
+      btn.innerHTML = added ? '\u2605 Saved to wishlist' : '\u2606 Add to Wishlist';
+      btn.setAttribute('aria-pressed', added ? 'true' : 'false');
+      syncWishButtons();
+    }
+
     function openPlace(stateSlug, idx, fromRegion) {
       const state = DATA.states.find(s => s.slug === stateSlug);
       const p = state.places[idx];
@@ -1643,42 +1669,65 @@
       const nearby = state.places.filter((x, i) => i !== idx).slice(0, 3);
       const key = stateSlug + '|' + idx;
       const isWish = wishlist.has(key);
+      const inTrip = (typeof itinerary !== 'undefined') && itinerary.has(key);
+      const tips = travelTips(p);
+      _modalLastFocus = document.activeElement;
       document.getElementById('modalBody').style.setProperty('--cat-color', catColor(p.category));
       document.getElementById('modalBody').innerHTML = `
-    <button class="wish-btn ${isWish ? 'active' : ''}" id="modalWishBtn" style="top:54px;right:18px;" onclick="toggleWish('${stateSlug}', ${idx}, this)" aria-label="Save to wishlist">
+    <button class="wish-btn ${isWish ? 'active' : ''}" id="modalWishBtn" style="top:54px;right:18px;" onclick="onStarToggle('${stateSlug}', ${idx})" aria-label="Save ${p.name} to wishlist" aria-pressed="${isWish}">
       ${isWish ? '\u2605' : ' \u2606'}
     </button>
-    <button class="modal-close" onclick="closeModal()" aria-label="Close">&times;</button>
-    ${p.img ? `<div class="modal-img"><img src="${p.img}" alt="${p.name}"></div>`
+    <button class="modal-close" id="modalCloseBtn" onclick="closeModal()" aria-label="Close details">&times;</button>
+    ${p.img ? `<div class="modal-img"><img src="${p.img}" alt="${p.name}, ${state.name}" loading="lazy" decoding="async"></div>`
           : `<div class="modal-img" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--gold-bg),var(--paper-raised));font-family:'Fraunces',serif;font-size:14px;color:var(--gold);">${catLabel(p.category)}</div>`}
     <div class="cat-label">${catLabel(p.category)}</div>
-    <h3>${p.name}</h3>
+    <h3 id="modalTitle">${p.name}</h3>
     <div class="loc-line">${state.name}</div>
     <p class="desc">${p.desc}</p>
     <p class="desc">${p.history}</p>
     <div class="fact-grid">
       <div class="fact"><div class="k">Best time to visit</div><div class="v">${p.best}</div></div>
-      <div class="fact"><div class="k">Entry fee</div><div class="v">${p.fee}</div></div>
+      <div class="fact"><div class="k">Recommended duration</div><div class="v">Suggested: ${recommendedDuration(p)}</div></div>
       <div class="fact"><div class="k">Timings</div><div class="v">${p.timings}</div></div>
+      <div class="fact"><div class="k">Entry fee</div><div class="v">${p.fee}</div></div>
+      <div class="fact"><div class="k">Location</div><div class="v">${p.map}</div></div>
       <div class="fact"><div class="k">State</div><div class="v">${state.name}</div></div>
     </div>
+    ${tips.length ? `<div class="tips"><div class="k">Good to know</div><ul>${tips.map(t => `<li>${t}</li>`).join('')}</ul></div>` : ''}
     <div class="btn-row">
       <a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.map)}" target="_blank" rel="noopener">&#x1F4CD; View on map</a>
       ${fromRegion ? `<a class="book-btn" href="${mmtLink(state, p)}" target="_blank" rel="noopener noreferrer" title="Book your trip to ${p.name} on MakeMyTrip">&#x1F9F3; Book Your Trip</a>` : ''}
+      <button class="modal-act ${isWish ? 'added' : ''}" id="modalWishTextBtn" type="button" onclick="toggleWishText('${stateSlug}', ${idx}, this)" aria-pressed="${isWish}">${isWish ? '\u2605 Saved to wishlist' : '\u2606 Add to Wishlist'}</button>
+      <button class="it-add-btn modal-trip-btn ${inTrip ? 'added' : ''}" type="button" onclick="toggleItinerary('${stateSlug}', ${idx}, this)" aria-pressed="${inTrip}">${inTrip ? '\u2713 Added to trip' : '+ Add to Trip'}</button>
     </div>
     ${nearby.length ? `<div class="nearby">
       <div class="k">Nearby in ${state.name}</div>
-      ${nearby.map(n => `<div class="nearby-item" onclick="openPlace('${state.slug}', ${state.places.indexOf(n)}, true)">${n.name}</div>`).join('')}
+      ${nearby.map(n => `<div class="nearby-item" role="button" tabindex="0" onclick="openPlace('${state.slug}', ${state.places.indexOf(n)}, true)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openPlace('${state.slug}', ${state.places.indexOf(n)}, true);}">${n.name}</div>`).join('')}
     </div>` : ''}
+    <div class="modal-foot"><button class="modal-foot-close" type="button" onclick="closeModal()">Close</button></div>
   `;
       overlay.classList.add('open');
+      const closeBtn = document.getElementById('modalCloseBtn');
+      if (closeBtn) closeBtn.focus();
     }
 
     function closeModal() {
       document.getElementById('modalOverlay').classList.remove('open');
+      if (_modalLastFocus && _modalLastFocus.focus) { try { _modalLastFocus.focus(); } catch (e) { } _modalLastFocus = null; }
     }
     document.getElementById('modalOverlay').addEventListener('click', (e) => {
       if (e.target.id === 'modalOverlay') closeModal();
+    });
+    /* Keyboard focus trap: keep Tab cycling inside the open destination modal */
+    document.getElementById('modalOverlay').addEventListener('keydown', (e) => {
+      if (e.key !== 'Tab') return;
+      const overlay = document.getElementById('modalOverlay');
+      if (!overlay.classList.contains('open')) return;
+      const items = Array.from(overlay.querySelectorAll('button, a[href], [tabindex]:not([tabindex="-1"])')).filter(el => !el.disabled && el.offsetParent !== null);
+      if (!items.length) return;
+      const first = items[0], last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     });
 
     /* search */
@@ -3112,6 +3161,39 @@
     .place-card .wish-btn { z-index: 2; }
     @media (max-width: 640px) {
       .pc-meta div { font-size: 12px; }
+    }
+
+    /* ---------- Destination modal: premium, scrollable, responsive ---------- */
+    .modal { max-height: calc(100vh - 96px); overflow-y: auto; overscroll-behavior: contain; }
+    .modal-img { height: 300px; }
+    .modal-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .tips { margin: 0 40px 24px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--paper-raised); padding: 16px 18px; }
+    .tips .k { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--teal); margin-bottom: 8px; }
+    .tips ul { margin: 0; padding-left: 18px; font-size: 13.5px; color: var(--ink-soft); line-height: 1.6; }
+    .tips li + li { margin-top: 4px; }
+    .modal-act {
+      flex: 1; min-width: 140px; display: inline-flex; align-items: center; justify-content: center;
+      padding: 12px 18px; border-radius: 6px; font-family: 'Work Sans', sans-serif;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      background: transparent; color: var(--maroon); border: 1.5px solid var(--maroon);
+      transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+    }
+    .modal-act:hover { background: var(--maroon-bg); transform: translateY(-1px); }
+    .modal-act:active { transform: scale(0.97); }
+    .modal-act.added { background: var(--maroon); color: #fff; }
+    .modal-trip-btn { flex: 1; min-width: 140px; }
+    .modal-foot { margin: 22px 40px 0; display: flex; justify-content: center; }
+    .modal-foot-close {
+      background: none; border: none; padding: 8px 16px; cursor: pointer;
+      font-family: 'Work Sans', sans-serif; font-size: 13.5px; color: var(--ink-soft);
+      text-decoration: underline; border-radius: var(--radius-sm);
+    }
+    .modal-foot-close:hover { color: var(--gold); }
+    @media (max-width: 640px) {
+      .modal { max-height: calc(100vh - 40px); }
+      .modal-img { height: 200px; }
+      .tips { margin: 0 22px 20px; }
+      .modal-foot { margin: 18px 22px 0; }
     }
 
     /* ---------- Responsive: tablet + mobile (no layout breakage) ---------- */
