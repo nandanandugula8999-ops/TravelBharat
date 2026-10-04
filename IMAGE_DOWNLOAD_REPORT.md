@@ -66,7 +66,7 @@ This Photo was taken by Timothy A. Gonsalves.  Feel free  | Yes — credit the a
 | Sukhna Lake (Chandigarh) | `images/places/sukhna-lake.webp` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Sunset_at_Sukhna_Lake,_Chandigarh,_India.jpg | CC BY-SA 4.0 | UnpetitproleX | Yes — credit the author, link the license | ok |
 | Sultanpur National Park (Haryana) | `images/places/sultanpur-national-park.webp` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:A_lake_with_wildlife_in_Sultanpur_National_park.jpg | CC BY-SA 4.0 | Slyronit | Yes — credit the author, link the license | ok · REVIEW |
 | Sundarbans National Park (West Bengal) | `images/places/sundarbans-national-park.webp` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Tourist_Boat_in_Sundarbans,_West_Bengal,_India_07.jpg | CC BY 4.0 | Kingshuk Mondal | Yes — credit the author, link the license | ok |
-| Taj Mahal (Uttar Pradesh) | `images/places/taj-mahal.webp` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Taj_Mahal,_Agra,_India.jpg | CC BY-SA 4.0 | Yann (talk) | Yes — credit the author, link the license | ok |
+| Taj Mahal (Uttar Pradesh) | `images/places/taj-mahal.jpg` (1920×1262 HQ) | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Taj_Mahal_(Edited).jpeg | CC BY-SA | Yann Forget, edited by Jim Carter — attribution: © Yann Forget / Wikimedia Commons | ok |
 | Tawang Monastery (Arunachal Pradesh) | `images/places/tawang-monastery.webp` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Tawang,_Arunachal_Pradesh_(21).jpg | CC BY-SA 4.0 | PP Yoonus | Yes — credit the author, link the license | ok |
 | Thar Desert Safari, Sam Dunes (Rajasthan) | `images/places/thar-desert-safari-sam-dunes.webp` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Sunrise_at_sams_sand_dunes.JPG | CC BY-SA 3.0 | Chinmayisk | Yes — credit the author, link the license | ok · REVIEW |
 | Tirumala Venkateswara Temple (Andhra Pradesh) | `images/places/tirumala-venkateswara-temple.webp` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Tirumala_Venkateswara_temple_entrance_09062015.JPG | CC BY-SA 4.0 | Nikhilb239 | Yes — credit the author, link the license | ok |
@@ -102,5 +102,5 @@ These downloaded fine but the title match was weak — please glance at the imag
 ## Shared (related-only) reuse
 
 - Each of the 21 state `heroImg` values reuses the first place image **of the same state** (related, not unrelated).
-- The hero backdrop reuses `images/places/pangong-tso.webp` (Pangong Tso, Ladakh) as a generic scenic background.
+- The hero backdrop reuses `images/places/taj-mahal.jpg` (Taj Mahal, Agra) as a generic scenic background.
 - No two unrelated destinations share a file.

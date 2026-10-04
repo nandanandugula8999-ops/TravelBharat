@@ -2,9 +2,14 @@
 
 > Twenty-eight states, eight union territories, one country worth reading slowly.
 
-`index7.html` is a **single-file, zero-build static travel guide for India**. Open it in a browser and you get a state-by-state directory of tourist places — with search, gallery, detail modals, wishlist, itinerary builder, and booking links.
+`index7.html` is a **zero-build static travel guide for India**. Open it in a browser and you get a state-by-state directory of tourist places — with search, gallery, detail modals, wishlist, itinerary builder, and booking links.
 
-No npm, no bundler, no backend. Just HTML + CSS + JS in one file.
+No npm, no bundler, no backend. Code is split for maintainability:
+
+- `index7.html` — markup only
+- `styles.css` — all styling (base + polish + wow + QA-fix layers)
+- `app.js` — all application logic
+- `theme.js` — tiny blocking head script that restores the saved theme before first paint
 
 ## How to run
 
@@ -20,15 +25,16 @@ No npm, no bundler, no backend. Just HTML + CSS + JS in one file.
    npx serve .
    ```
 
-All images are embedded as `data:image/jpeg;base64,...` (`IMG`, `IMG2`, `IMG3`, `IMG4` objects), so the file works offline except for Google Fonts + external booking/maps links.
+All images are `.webp` files under `images/places/` (lazy-loaded with width/height to avoid layout shift), so the pages work offline except for Google Fonts + external booking/maps links.
 
 ## What it does
 
 ### 1. Header (sticky)
 - `TravelBharat` wordmark → `goHome()` resets to home view
-- Live search `#searchInput` → searches places + states by name, capital, category
-  - `buildSearchIndex()`, `SEARCH_INDEX`, `handleSearchClick()`
-  - Shows up to 8 matches in dropdown, click jumps to `openState()` / `openPlace()`
+- Live search `#searchInput` (combobox + listbox) → searches places + states by name, capital, category
+  - `buildSearchIndex()`, `SEARCH_INDEX`, `renderSearchResults()`, `handleSearchClick()`
+  - Shows up to 8 matches in dropdown; click, Enter, or ↑/↓ + Enter jumps to `openState()` / `openPlace()`; Escape/× clears
+  - Clear (×) button `#searchClear` appears while typing
 - Wishlist star button `#headerWishBtn` with count badge `#wishCount` → `openWishlist()`
 
 ### 2. Hero
@@ -63,7 +69,7 @@ Hidden states (still in data + search, `hidden:true`): Dadra and Nagar Haveli an
 - `renderPlaces(state)` → `.place-card` per place:
   - category color top-border (`catColor()`), label (`catLabel()`), name, desc
   - wishlist star → `toggleWish()`
-  - “Book on MakeMyTrip” link → `mmtLink()` currently returns `https://www.makemytrip.com/`
+  - “Book on MakeMyTrip” link → `mmtLink(state, place)` builds a per-place holiday-packages URL from the place's own destination (with aliases for towns MMT doesn't list)
 
 ### 6. Place detail modal
 - `openPlace(stateSlug, idx)` → `#modalOverlay` + `#modalBody`
@@ -77,8 +83,8 @@ Hidden states (still in data + search, `hidden:true`): Dadra and Nagar Haveli an
 - `toggleWish()`, `updateWishCount()`, `wishEntries()`, `renderWishlist()`, `openWishlist()`, `closeWishlist()`, `viewWishPlace()`, `removeWish()`, `clearWishlist()` (two-tap confirm)
 - Stores count in header, syncs stars via `syncWishButtons()`
 
-### 8. Itinerary builder
-- `itinerary = new Set("slug|idx")`
+### 8. Itinerary builder (persistent)
+- `itinerary = new Set("slug|idx")`, saved to `localStorage['travelbharat-itinerary']` (loaded + pruned on start)
 - Banner in state view: count + Generate button → `updateItineraryUI()`
 - `openItineraryModal()` groups by state, sorts, chunks into days (max 3 places/day, new day on state change)
 - Shows `Your N-Day Trip Plan` with day timeline
@@ -132,12 +138,21 @@ function mmtLink(state, place) { return MMT_URL; }
 
 ## Limitations / TODO
 
-- Images are base64 in-file → `index7.html` is very large (~MBs). Consider moving to `/images/` + lazy loading.
-- `mmtLink()` is generic, not per-place deep link yet.
-- Itinerary selection UI (`toggleItinerary`) exists in JS but no “+” button wired in current `renderPlaces()` — only wishlist star is wired.
-- Wishlist modal CSS (`.wishlist-modal`, `.wl-*`) referenced in HTML/JS but styles are missing in `<style>` — works functionally, looks unstyled.
+- All modals lock background scrolling while open (nesting-safe counter in `lockScroll()` / `unlockScroll()`).
 - Search is substring-only, no fuzzy match.
-- No router — back button doesn’t restore `openState()`, state is in-memory only.
+- No router — back button doesn’t restore `openState()`, view state is in-memory only.
+
+## How to test locally
+
+Keep all four files (`index7.html`, `styles.css`, `app.js`, `theme.js`) together — `file://` works, but a local server is more reliable:
+
+```powershell
+# Python
+python -m http.server 8000
+# then open http://localhost:8000/index7.html
+```
+
+Checklist: nav links + hamburger (desktop & phone widths) · search typing, ↑/↓/Enter, Escape, × · filters + Reset · empty-filter message · place cards (wishlist star, View details, + Add to trip, Maps, MakeMyTrip) · detail modal (facts, nearby, wishlist/trip buttons, Escape/X/overlay close) · wishlist add/remove/persist after refresh · trip planner add/reorder/remove/print/download/persist after refresh · theme toggle persists · light + dark mode · 320px width with no horizontal scroll · keyboard-only run (Tab through header, search, cards, modals).
 
 ## Quick customize
 

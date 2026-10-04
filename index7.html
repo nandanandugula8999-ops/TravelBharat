@@ -34,8 +34,11 @@
     <div class="wrap bar">
       <div class="wordmark" onclick="goHome()">Travel<span>Bharat</span></div>
       <div class="search-shell">
-        <input id="searchInput" type="text" placeholder="Search a place, state, or category" autocomplete="off">
-        <div class="search-results" id="searchResults"></div>
+        <input id="searchInput" type="text" placeholder="Search a place, state, or category" autocomplete="off"
+          role="combobox" aria-expanded="false" aria-controls="searchResults" aria-autocomplete="list"
+          aria-label="Search places, states or categories">
+        <button class="search-clear" id="searchClear" type="button" aria-label="Clear search" tabindex="-1">&times;</button>
+        <div class="search-results" id="searchResults" role="listbox" aria-label="Search suggestions"></div>
       </div>
       <button class="nav-toggle" id="navToggle" aria-label="Open navigation menu" aria-expanded="false"
         aria-controls="mainNav" onclick="toggleMainNav()">&#9776;</button>
@@ -89,6 +92,10 @@
       <p>A field guide to India's tourist places organised the way the land actually breaks apart, from Ladakh's
         passes to Kerala's backwaters.</p>
       <div class="region-jump" id="regionJump"></div>
+      <div class="hero-cta">
+        <a class="hero-cta-primary" href="#regionsWrap">Start exploring</a>
+        <button class="hero-cta-ghost" type="button" onclick="openItineraryModal()">Plan my trip</button>
+      </div>
       <div class="hero-stats" id="heroStats" aria-label="Guide coverage"></div>
     </div>
     <a class="scroll-cue" href="#regionsWrap" aria-label="Scroll to destinations"><span aria-hidden="true"></span></a>

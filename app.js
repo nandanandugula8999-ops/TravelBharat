@@ -27,9 +27,9 @@
           ]
         },
         {
-          slug: "uttar-pradesh", name: "Uttar Pradesh", region: "north", capital: "Lucknow", tagline: "The Ganga plain's temple towns and the Taj at its centre.", heroImg: "images/places/taj-mahal.webp",
+          slug: "uttar-pradesh", name: "Uttar Pradesh", region: "north", capital: "Lucknow", tagline: "The Ganga plain's temple towns and the Taj at its centre.", heroImg: "images/places/taj-mahal.jpg",
           places: [
-            { name: "Taj Mahal", category: "heritage", img: "images/places/taj-mahal.webp", desc: "A white marble mausoleum on the Yamuna's bank, built by Shah Jahan for his wife Mumtaz Mahal and inlaid with semi-precious stone.", history: "Construction ran from 1632 to 1653, employing an estimated 20,000 artisans; a UNESCO World Heritage Site since 1983.", best: "October to March, at sunrise", fee: "\u20B950 (Indians), \u20B91,100 (foreign nationals)", timings: "Sunrise to sunset, closed Fridays", map: "Taj Mahal, Agra" },
+            { name: "Taj Mahal", category: "heritage", img: "images/places/taj-mahal.jpg", desc: "A white marble mausoleum on the Yamuna's bank, built by Shah Jahan for his wife Mumtaz Mahal and inlaid with semi-precious stone.", history: "Construction ran from 1632 to 1653, employing an estimated 20,000 artisans; a UNESCO World Heritage Site since 1983.", best: "October to March, at sunrise", fee: "\u20B950 (Indians), \u20B91,100 (foreign nationals)", timings: "Sunrise to sunset, closed Fridays", map: "Taj Mahal, Agra" },
             { name: "Varanasi Ghats", category: "religious", img: "images/places/varanasi-ghats.webp", desc: "A string of stone steps along the Ganga where pilgrims bathe at dawn and cremation fires burn through the night.", history: "Regarded as one of the oldest continuously inhabited cities in the world and central to Hindu pilgrimage for millennia.", best: "October to March", fee: "Free; boat rides from \u20B9200", timings: "Ganga Aarti at Dashashwamedh Ghat, 6:45 PM daily", map: "Dashashwamedh Ghat, Varanasi" }
           ]
         },
@@ -269,7 +269,7 @@
     };
 
     const GALLERY = [
-      { img: "images/places/taj-mahal.webp", name: "Taj Mahal", place: "Uttar Pradesh", slug: "uttar-pradesh", idx: 0 },
+      { img: "images/places/taj-mahal.jpg", name: "Taj Mahal", place: "Uttar Pradesh", slug: "uttar-pradesh", idx: 0 },
       { img: "images/places/amber-fort.webp", name: "Amber Fort", place: "Rajasthan", slug: "rajasthan", idx: 0 },
       { img: "images/places/palolem-beach.webp", name: "Palolem Beach", place: "Goa", slug: "goa", idx: 1 },
       { img: "images/places/nubra-valley.webp", name: "Nubra Valley", place: "Ladakh", slug: "ladakh", idx: 1 },
@@ -334,7 +334,7 @@
       "sukhna-lake": "images/places/sukhna-lake.webp",
       "sultanpur-national-park": "images/places/sultanpur-national-park.webp",
       "sundarbans-national-park": "images/places/sundarbans-national-park.webp",
-      "taj-mahal": "images/places/taj-mahal.webp",
+      "taj-mahal": "images/places/taj-mahal.jpg",
       "tawang-monastery": "images/places/tawang-monastery.webp",
       "thar-desert-safari-sam-dunes": "images/places/thar-desert-safari-sam-dunes.webp",
       "tirumala-venkateswara-temple": "images/places/tirumala-venkateswara-temple.webp",
@@ -403,7 +403,7 @@
       "images/places/sukhna-lake.webp": [800, 194],
       "images/places/sultanpur-national-park.webp": [800, 533],
       "images/places/sundarbans-national-park.webp": [800, 533],
-      "images/places/taj-mahal.webp": [800, 526],
+      "images/places/taj-mahal.jpg": [1920, 1262],
       "images/places/tawang-monastery.webp": [800, 600],
       "images/places/thar-desert-safari-sam-dunes.webp": [800, 533],
       "images/places/tirumala-venkateswara-temple.webp": [800, 642],
@@ -671,6 +671,17 @@
       syncWishButtons();
     }
 
+    /* Modal scroll-lock: freeze the page behind any open dialog (nesting-safe) */
+    let _lockCount = 0;
+    function lockScroll() {
+      _lockCount++;
+      document.body.style.overflow = 'hidden';
+    }
+    function unlockScroll() {
+      _lockCount = Math.max(0, _lockCount - 1);
+      if (!_lockCount) document.body.style.overflow = '';
+    }
+
     function openPlace(stateSlug, idx, fromRegion) {
       const state = DATA.states.find(s => s.slug === stateSlug);
       const p = state && state.places[idx];
@@ -716,13 +727,18 @@
     </div>` : ''}
     <div class="modal-foot"><button class="modal-foot-close" type="button" onclick="closeModal()">Close</button></div>
   `;
+      const wasOpen = overlay.classList.contains('open');
       overlay.classList.add('open');
+      if (!wasOpen) lockScroll();
       const closeBtn = document.getElementById('modalCloseBtn');
       if (closeBtn) closeBtn.focus();
     }
 
     function closeModal() {
-      document.getElementById('modalOverlay').classList.remove('open');
+      const ov = document.getElementById('modalOverlay');
+      if (!ov.classList.contains('open')) return;
+      ov.classList.remove('open');
+      unlockScroll();
       if (_modalLastFocus && _modalLastFocus.focus) { try { _modalLastFocus.focus(); } catch (e) { } _modalLastFocus = null; }
     }
     document.getElementById('modalOverlay').addEventListener('click', (e) => {
@@ -822,27 +838,87 @@
     }
     const SEARCH_INDEX = buildSearchIndex();
 
-    searchInput.addEventListener('input', () => {
-      const q = searchInput.value.trim().toLowerCase();
-      if (!q) { searchResults.classList.remove('open'); return; }
-      const matches = SEARCH_INDEX.filter(item =>
-        item.label.toLowerCase().includes(q) || item.sub.toLowerCase().includes(q)
+    let lastMatches = [];
+    let activeMatch = -1;
+
+    function syncSearchClear() {
+      const shell = searchInput.closest('.search-shell');
+      if (shell) shell.classList.toggle('has-text', searchInput.value.length > 0);
+      searchInput.setAttribute('aria-expanded', searchResults.classList.contains('open') ? 'true' : 'false');
+    }
+
+    function renderSearchResults() {
+      const q = searchInput.value.trim();
+      if (!q) {
+        searchResults.classList.remove('open');
+        lastMatches = [];
+        activeMatch = -1;
+        syncSearchClear();
+        return;
+      }
+      const ql = q.toLowerCase();
+      lastMatches = SEARCH_INDEX.filter(item =>
+        item.label.toLowerCase().includes(ql) || item.sub.toLowerCase().includes(ql)
       ).slice(0, 8);
-      if (!matches.length) {
-        searchResults.innerHTML = `<div class="search-empty" role="option" aria-selected="false">No matches for &ldquo;${escHtml(searchInput.value.trim())}&rdquo;. Try a state, place or category.</div>`;
+      activeMatch = -1;
+      if (!lastMatches.length) {
+        searchResults.innerHTML = `<div class="search-empty">No matches for &ldquo;${escHtml(q)}&rdquo;. Try a state, place or category.</div>`;
       } else {
-        searchResults.innerHTML = matches.map(m => `
-      <div class="sr-item" role="option" tabindex="0" onclick='handleSearchClick(${JSON.stringify(m).replace(/'/g, "&#39;")})' onkeydown="if(event.key==='Enter'){handleSearchClick(${JSON.stringify(m).replace(/'/g, "&#39;").replace(/"/g, '&quot;')})}">
+        searchResults.innerHTML = lastMatches.map((m, i) => `
+      <div class="sr-item" role="option" id="sr-opt-${i}" aria-selected="false" data-idx="${i}" tabindex="-1">
         ${escHtml(m.label)}<small>${escHtml(m.sub)}</small>
       </div>
     `).join('');
       }
       searchResults.classList.add('open');
+      searchInput.setAttribute('aria-activedescendant', '');
+      syncSearchClear();
+    }
+
+    function highlightMatch() {
+      searchResults.querySelectorAll('.sr-item').forEach((el, i) => {
+        const on = i === activeMatch;
+        el.classList.toggle('sr-active', on);
+        el.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      searchInput.setAttribute('aria-activedescendant', activeMatch >= 0 ? 'sr-opt-' + activeMatch : '');
+    }
+
+    searchInput.addEventListener('input', renderSearchResults);
+    searchResults.addEventListener('click', (e) => {
+      const item = e.target.closest('.sr-item');
+      if (item && item.dataset.idx != null && lastMatches[parseInt(item.dataset.idx, 10)]) {
+        handleSearchClick(lastMatches[parseInt(item.dataset.idx, 10)]);
+      }
+    });
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        if (!lastMatches.length) return;
+        e.preventDefault();
+        activeMatch = e.key === 'ArrowDown'
+          ? (activeMatch + 1) % lastMatches.length
+          : (activeMatch - 1 + lastMatches.length) % lastMatches.length;
+        highlightMatch();
+      } else if (e.key === 'Enter') {
+        if (activeMatch >= 0 && lastMatches[activeMatch]) handleSearchClick(lastMatches[activeMatch]);
+        else if (lastMatches.length === 1) handleSearchClick(lastMatches[0]);
+      } else if (e.key === 'Escape') {
+        if (searchInput.value) { searchInput.value = ''; renderSearchResults(); }
+        else { searchResults.classList.remove('open'); syncSearchClear(); }
+      }
+    });
+    document.getElementById('searchClear').addEventListener('click', () => {
+      searchInput.value = '';
+      renderSearchResults();
+      searchInput.focus();
     });
 
     function handleSearchClick(m) {
       searchResults.classList.remove('open');
       searchInput.value = '';
+      lastMatches = [];
+      activeMatch = -1;
+      syncSearchClear();
       if (m.type === 'state') {
         openState(m.slug);
       } else {
@@ -852,7 +928,10 @@
     }
 
     document.addEventListener('click', (e) => {
-      if (!e.target.closest('.search-shell')) searchResults.classList.remove('open');
+      if (!e.target.closest('.search-shell')) {
+        searchResults.classList.remove('open');
+        syncSearchClear();
+      }
     });
 
     renderRegionJump();
@@ -1084,7 +1163,32 @@
     // ==== ITINERARY BUILDER ====
     const itinerary = new Set(); // stores "stateSlug|index"
 
+    function saveItinerary() {
+      try { localStorage.setItem('travelbharat-itinerary', JSON.stringify([...itinerary])); } catch (e) { }
+    }
+
+    function pruneItinerary() {
+      let changed = false;
+      [...itinerary].forEach(key => {
+        const parts = String(key).split('|');
+        const state = DATA.states.find(s => s.slug === parts[0]);
+        const idx = parseInt(parts[1], 10);
+        if (!state || isNaN(idx) || !state.places[idx]) { itinerary.delete(key); changed = true; }
+      });
+      if (changed) saveItinerary();
+    }
+
+    // Load saved trip if available
+    try {
+      const saved = localStorage.getItem('travelbharat-itinerary');
+      if (saved) {
+        JSON.parse(saved).forEach(k => itinerary.add(k));
+        pruneItinerary();
+      }
+    } catch (e) { }
+
     function updateItineraryUI() {
+      saveItinerary();
       const count = itinerary.size;
       const countEl = document.getElementById('itineraryCount');
       const generateBtn = document.getElementById('generateItineraryBtn');
@@ -1146,6 +1250,7 @@
       const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
       itinerary.clear();
       arr.forEach(k => itinerary.add(k));
+      saveItinerary();
       openItineraryModal();
     }
     function removeItineraryStop(key) {
@@ -1250,7 +1355,7 @@
       }).join('')}`;
 
       modal.classList.add('open');
-      if (!wasOpen) { const c = modal.querySelector('.it-close'); if (c) c.focus(); }
+      if (!wasOpen) { lockScroll(); const c = modal.querySelector('.it-close'); if (c) c.focus(); }
     }
 
     function itineraryText() {
@@ -1304,6 +1409,7 @@
       const m = document.getElementById('itineraryModal');
       if (!m || !m.classList.contains('open')) return;
       m.classList.remove('open');
+      unlockScroll();
       const btn = document.getElementById('tripClearBtn');
       if (btn) { btn.dataset.armed = ''; btn.textContent = 'Clear trip'; }
       if (_tripLastFocus && _tripLastFocus.focus) { try { _tripLastFocus.focus(); } catch (e) { } _tripLastFocus = null; }
@@ -1399,7 +1505,10 @@
       closeItineraryModal();
       _wlLastFocus = document.activeElement;
       renderWishlist();
-      document.getElementById('wishlistModal').classList.add('open');
+      const wm = document.getElementById('wishlistModal');
+      const wasOpen = wm.classList.contains('open');
+      wm.classList.add('open');
+      if (!wasOpen) lockScroll();
       document.getElementById('wishlistClose').focus();
     }
 
@@ -1407,6 +1516,7 @@
       const m = document.getElementById('wishlistModal');
       if (!m || !m.classList.contains('open')) return;
       m.classList.remove('open');
+      unlockScroll();
       if (_wlLastFocus && _wlLastFocus.focus) _wlLastFocus.focus();
     }
 
