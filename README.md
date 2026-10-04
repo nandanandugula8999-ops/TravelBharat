@@ -88,7 +88,7 @@ Hidden states (still in data + search, `hidden:true`): Dadra and Nagar Haveli an
 - CSS variables in `:root` for light theme + `prefers-color-scheme: dark` + manual `[data-theme="dark"]`
 - Colors: `--ink`, `--paper`, `--gold`, `--teal`, `--maroon`, `--slate`
 - Responsive grid, sticky header, skeleton shimmer CSS (`.skeleton`), hover zooms, modal overlays
-- `favicon.png` linked as icon
+- `images/favicon.png` linked as icon
 
 ## Data model
 
@@ -124,12 +124,11 @@ function mmtLink(state, place) { return MMT_URL; }
 
 ## Files in this folder
 
-- `index7.html` — this app (described here)
-- `index4.html` — earlier iteration
-- `favicon.png` — site icon
-- `travelbharat/` — separate Next.js(?) project, ignore for this file
-- `*.avif` — standalone images (not used by index7, which embeds base64)
-- `GITHUB pushing.txt` — notes
+- `index7.html` — page markup (styles in `styles.css`, logic in `app.js`, pre-paint theme in `theme.js`)
+- `images/places/` — site images (`.webp`, referenced by the app)
+- `images/raw/` — standalone source photos (`.avif`, not referenced by the app)
+- `images/favicon.png` — site icon
+- `data/image-sources.json` — image source data
 
 ## Limitations / TODO
 
