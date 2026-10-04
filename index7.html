@@ -1642,9 +1642,42 @@
   `).join('');
     }
 
-    // MakeMyTrip target. Kept in one helper so a per-place deep link can be swapped in later.
+    // MakeMyTrip target. Every Book button opens the holiday-packages page
+    // for that place's own destination (city/state from its map field),
+    // e.g. Taj Mahal -> agra-travel-packages.html, not the MMT homepage.
     const MMT_URL = 'https://www.makemytrip.com/';
-    function mmtLink(state, place) { return MMT_URL; }
+    // A few map towns are too small for MakeMyTrip to list, so resolve
+    // them to the nearest destination MakeMyTrip does list.
+    const MMT_DEST_ALIAS = {
+      'himachal pradesh': 'himachal',
+      'old goa': 'goa',
+      'havelock island': 'andaman',
+      'port blair': 'andaman',
+      'nongriat': 'meghalaya',
+      'kurukshetra': 'haryana',
+      'silvassa': 'daman'
+    };
+    function mmtSlug(s) {
+      return String(s || '').toLowerCase().trim()
+        .replace(/&/g, 'and')
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, '_');
+    }
+    function mmtDestination(state, place) {
+      let city = '';
+      if (place && place.map && place.map.indexOf(',') !== -1) {
+        city = place.map.split(',').pop().trim();
+      }
+      const alias = MMT_DEST_ALIAS[city.toLowerCase()];
+      if (alias) return alias;
+      if (city) return city;
+      return (state && state.name) || '';
+    }
+    function mmtLink(state, place) {
+      const slug = mmtSlug(mmtDestination(state, place)) || mmtSlug(state && state.name);
+      if (!slug) return MMT_URL;
+      return MMT_URL + 'holidays-india/' + slug + '-travel-packages.html';
+    }
 
     function catColor(cat) { return DATA.categories[cat] ? DATA.categories[cat].color : "var(--gold)"; }
     function catLabel(cat) { return DATA.categories[cat] ? DATA.categories[cat].label : cat; }
