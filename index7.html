@@ -135,6 +135,12 @@
       gap: 24px;
     }
 
+    header .wrap.bar {
+      max-width: none;
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
     .wordmark {
       font-family: 'Fraunces', serif;
       font-size: 22px;
@@ -151,7 +157,8 @@
     .search-shell {
       position: relative;
       flex: 1;
-      max-width: 380px;
+      max-width: 320px;
+      margin: 0 auto;
     }
 
     .search-shell input {
@@ -171,7 +178,7 @@
     }
 
     .header-wish {
-      margin-left: auto;
+      margin-left: 12px;
     }
 
     .header-wish .wish-count {
@@ -234,6 +241,202 @@
       padding: 14px;
       font-size: 13px;
       color: var(--ink-soft);
+    }
+
+    /* ---- primary nav (beside search) ---- */
+    .nav-toggle {
+      display: none;
+      background: none;
+      border: 1px solid var(--line-strong);
+      border-radius: 3px;
+      color: var(--ink);
+      font-size: 19px;
+      line-height: 1;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .nav-toggle:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    .main-nav {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .nav-link {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Work Sans', sans-serif;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--ink);
+      padding: 10px 11px;
+      border-radius: 3px;
+      white-space: nowrap;
+      position: relative;
+    }
+
+    .nav-link:hover,
+    .nav-drop.open .nav-link {
+      color: var(--gold);
+      background: var(--gold-bg);
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      left: 11px;
+      right: 11px;
+      bottom: 6px;
+      height: 2px;
+      background: var(--gold);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform .18s ease;
+    }
+
+    .nav-link:hover::after {
+      transform: scaleX(1);
+    }
+
+    .nav-drop {
+      position: relative;
+    }
+
+    .nav-caret {
+      font-size: 9px;
+      margin-left: 5px;
+    }
+
+    .nav-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      min-width: 210px;
+      background: var(--paper-raised);
+      border: 1px solid var(--line-strong);
+      border-radius: 4px;
+      box-shadow: 0 8px 24px rgba(20, 23, 31, 0.14);
+      padding: 6px;
+      z-index: 60;
+    }
+
+    .nav-drop.open .nav-menu {
+      display: block;
+    }
+
+    .nav-menu button {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Work Sans', sans-serif;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--ink);
+      padding: 9px 12px;
+      border-radius: 3px;
+    }
+
+    .nav-menu button:hover {
+      background: var(--gold-bg);
+      color: var(--gold);
+    }
+
+    .nav-menu button small {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 400;
+      color: var(--ink-soft);
+      margin-top: 1px;
+    }
+
+    .nav-toggle:focus-visible,
+    .nav-link:focus-visible,
+    .nav-menu button:focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 2px;
+    }
+
+    @media (min-width: 1061px) {
+      .nav-drop:hover .nav-menu {
+        display: block;
+      }
+    }
+
+    @media (max-width: 1060px) {
+      .nav-toggle {
+        display: block;
+      }
+
+      .main-nav {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--paper);
+        border-bottom: 1px solid var(--line-strong);
+        box-shadow: 0 12px 28px rgba(20, 23, 31, 0.12);
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        padding: 8px 22px 16px;
+        z-index: 45;
+      }
+
+      .main-nav.open {
+        display: flex;
+      }
+
+      .nav-link {
+        text-align: left;
+        padding: 12px 6px;
+        border-top: 1px solid var(--line);
+        border-radius: 0;
+        font-size: 14.5px;
+      }
+
+      .nav-link:first-child {
+        border-top: none;
+      }
+
+      .nav-link::after {
+        display: none;
+      }
+
+      .nav-drop .nav-menu {
+        position: static;
+        box-shadow: none;
+        border: none;
+        border-top: 1px solid var(--line);
+        border-radius: 0;
+        padding: 4px 0 4px 12px;
+        min-width: 0;
+      }
+    }
+
+    @media (max-width: 640px) {
+      header .wrap.bar {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      header .bar .nav-toggle {
+        margin-left: auto;
+      }
+
+      header .bar .header-wish {
+        margin-left: 8px;
+      }
     }
 
     /* hero */
@@ -1040,6 +1243,35 @@
         <input id="searchInput" type="text" placeholder="Search a place, state, or category" autocomplete="off">
         <div class="search-results" id="searchResults"></div>
       </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Open navigation menu" aria-expanded="false"
+        aria-controls="mainNav" onclick="toggleMainNav()">&#9776;</button>
+      <nav class="main-nav" id="mainNav" aria-label="Primary">
+        <button class="nav-link" type="button" onclick="goHome();closeMainNav();">Home</button>
+        <div class="nav-drop" id="navDrop-dest">
+          <button class="nav-link" type="button" aria-expanded="false" aria-haspopup="true"
+            onclick="toggleNavDrop('dest')">Destinations<span class="nav-caret">&#9662;</span></button>
+          <div class="nav-menu" role="menu">
+            <button type="button" onclick="scrollToRegion('north');closeMainNav();">North<small>Himalayan passes &amp; desert forts</small></button>
+            <button type="button" onclick="scrollToRegion('west');closeMainNav();">West<small>Coastline, salt flats &amp; Deccan hills</small></button>
+            <button type="button" onclick="scrollToRegion('south');closeMainNav();">South<small>Temple towns &amp; backwaters</small></button>
+            <button type="button" onclick="scrollToRegion('east');closeMainNav();">East<small>River deltas &amp; colonial ports</small></button>
+            <button type="button" onclick="scrollToRegion('northeast');closeMainNav();">Northeast<small>Root bridges &amp; cloud forests</small></button>
+            <button type="button" onclick="scrollToRegion('central');closeMainNav();">Central<small>Sandstone temples &amp; tiger forests</small></button>
+          </div>
+        </div>
+        <div class="nav-drop" id="navDrop-cat">
+          <button class="nav-link" type="button" aria-expanded="false" aria-haspopup="true"
+            onclick="toggleNavDrop('cat')">Categories<span class="nav-caret">&#9662;</span></button>
+          <div class="nav-menu" role="menu">
+            <button type="button" onclick="browseCategory('heritage');closeMainNav();">Heritage<small>Forts, palaces &amp; cave temples</small></button>
+            <button type="button" onclick="browseCategory('nature');closeMainNav();">Nature<small>Parks, beaches &amp; backwaters</small></button>
+            <button type="button" onclick="browseCategory('religious');closeMainNav();">Pilgrimage<small>Temples, shrines &amp; ghats</small></button>
+            <button type="button" onclick="browseCategory('adventure');closeMainNav();">Adventure<small>Treks, passes &amp; valleys</small></button>
+          </div>
+        </div>
+        <button class="nav-link" type="button" onclick="openItineraryModal();closeMainNav();">Plan Trip</button>
+        <button class="nav-link" type="button" onclick="goFaq();closeMainNav();">FAQ</button>
+      </nav>
       <button class="wish-btn header-wish" id="headerWishBtn" title="My Wishlist" aria-label="My Wishlist"
         aria-haspopup="dialog" onclick="openWishlist()">
         <span>&#9733;</span><span class="wish-count" id="wishCount">0</span>
@@ -1955,6 +2187,47 @@
     });
 
     function escHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+    /* primary nav: mobile panel + dropdowns */
+    function toggleMainNav() {
+      const nav = document.getElementById('mainNav');
+      const btn = document.getElementById('navToggle');
+      const open = nav && !nav.classList.contains('open');
+      if (nav) nav.classList.toggle('open', open);
+      if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    function closeMainNav() {
+      const nav = document.getElementById('mainNav');
+      const btn = document.getElementById('navToggle');
+      if (nav) nav.classList.remove('open');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+      document.querySelectorAll('.nav-drop.open').forEach(d => {
+        d.classList.remove('open');
+        const b = d.querySelector('.nav-link');
+        if (b) b.setAttribute('aria-expanded', 'false');
+      });
+    }
+    function toggleNavDrop(name) {
+      const drop = document.getElementById('navDrop-' + name);
+      if (!drop) return;
+      const wasOpen = drop.classList.contains('open');
+      document.querySelectorAll('.nav-drop.open').forEach(d => {
+        d.classList.remove('open');
+        const b = d.querySelector('.nav-link');
+        if (b) b.setAttribute('aria-expanded', 'false');
+      });
+      if (!wasOpen) {
+        drop.classList.add('open');
+        const b = drop.querySelector('.nav-link');
+        if (b) b.setAttribute('aria-expanded', 'true');
+      }
+    }
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.main-nav') && !e.target.closest('.nav-toggle')) closeMainNav();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeMainNav();
+    });
 
     /* search */
     const searchInput = document.getElementById('searchInput');
