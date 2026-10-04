@@ -17,8 +17,8 @@
       --shadow-none: none;
     }
 
-    :root:not([data-theme="light"]) {
-      @media (prefers-color-scheme: dark) {
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
         --ink: #EDE7D6;
         --ink-soft: #B9B3A0;
         --paper: #14171F;
@@ -111,7 +111,8 @@
     }
 
     header .wrap.bar {
-      max-width: none;
+      max-width: 1280px;
+      margin: 0 auto;
       padding-left: 20px;
       padding-right: 20px;
     }
@@ -850,10 +851,18 @@
     .modal .loc-line,
     .modal p.desc,
     .modal .fact-grid,
-    .modal .map-btn,
+    .modal .btn-row,
     .modal .nearby {
       margin-left: 40px;
       margin-right: 40px;
+    }
+
+    .modal .btn-row .map-btn,
+    .modal .btn-row .book-btn,
+    .modal .btn-row .modal-act,
+    .modal .btn-row .modal-trip-btn {
+      margin-left: 0;
+      margin-right: 0;
     }
 
     .modal .cat-label {
@@ -2364,7 +2373,7 @@
       .state-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
       .place-list { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
       .modal .cat-label, .modal h3, .modal .loc-line, .modal p.desc,
-      .modal .fact-grid, .modal .map-btn, .modal .nearby, .modal .btn-row {
+      .modal .fact-grid, .modal .nearby, .modal .btn-row {
         margin-left: 28px; margin-right: 28px;
       }
     }
@@ -2385,7 +2394,7 @@
       .modal { margin: 0; }
       .modal-img { height: 200px; }
       .modal .cat-label, .modal h3, .modal .loc-line, .modal p.desc,
-      .modal .fact-grid, .modal .map-btn, .modal .nearby, .modal .btn-row {
+      .modal .fact-grid, .modal .nearby, .modal .btn-row {
         margin-left: 22px; margin-right: 22px;
       }
       .modal h3 { font-size: 24px; }

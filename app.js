@@ -416,6 +416,15 @@
       "images/places/wagah-border.webp": [800, 600]
     };
     function imgWH(src) { const d = IMG_DIMS[src]; return d ? ` width="${d[0]}" height="${d[1]}"` : ''; }
+    const IMG_FALLBACK = 'images/places/fallback.webp';
+    // Global safety net: any image that fails to load falls back instead of breaking layout
+    document.addEventListener('error', (e) => {
+      const t = e.target;
+      if (t && t.tagName === 'IMG' && !t.dataset.fb && t.src.indexOf('fallback.webp') === -1) {
+        t.dataset.fb = '1';
+        t.src = IMG_FALLBACK;
+      }
+    }, true);
 
     function renderGallery() {
       const el = document.getElementById('galleryGrid');
@@ -502,7 +511,9 @@
     function scrollToRegion(key) {
       goHome();
       requestAnimationFrame(() => {
-        document.getElementById('region-' + key).scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const target = document.getElementById('region-' + key);
+        if (!target) return;
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     }
 
@@ -562,7 +573,9 @@
 
     function renderStateView(state) {
       const view = document.getElementById('stateView');
-      const cats = [...new Set(state.places.map(p => p.category))];
+      if (!state || !view) return;
+      const regionName = (DATA.regions.find(r => r.key === state.region) || {}).name || 'India';
+      const cats = [...new Set((state.places || []).map(p => p.category))];
       const chips = ['all', ...cats].map(c => `
     <button class="chip ${c === activeFilter ? 'active' : ''}" onclick="setFilter('${c}')">${c === 'all' ? 'All places' : catLabel(c)}</button>
   `).join('');
@@ -571,7 +584,7 @@
       <button class="back-link" onclick="goHome()">&larr; All states</button>
       <div class="state-header">
         <h2>${state.name}</h2>
-        <div class="state-meta">Capital: ${state.capital} &middot; ${DATA.regions.find(r => r.key === state.region).name} India</div>
+        <div class="state-meta">Capital: ${state.capital} &middot; ${regionName} India</div>
         <div class="state-count" aria-live="polite">${state.places.length} destination${state.places.length !== 1 ? 's' : ''} &middot; ${cats.length} categor${cats.length !== 1 ? 'ies' : 'y'}: ${cats.map(catLabel).join(', ')}</div>
         <p class="state-desc">${state.tagline}</p>
       </div>
@@ -613,15 +626,20 @@
 
     function renderPlaces(state) {
       const list = document.getElementById('placeList');
-      const places = state.places.filter(p => activeFilter === 'all' || p.category === activeFilter);
+      if (!list) return;
+      const places = (state.places || []).filter(p => activeFilter === 'all' || p.category === activeFilter);
+      if (!places.length) {
+        list.innerHTML = `<div class="discover-empty">No places in this category yet. <button class="discover-reset" type="button" onclick="setFilter('all')">Show all places</button></div>`;
+        return;
+      }
       list.innerHTML = places.map((p, i) => {
-        const key = state.slug + '|' + i;
-        const isWish = wishlist.has(key);
         const realIdx = state.places.indexOf(p);
-        const inTrip = itinerary.has(state.slug + '|' + realIdx);
+        const key = state.slug + '|' + realIdx;
+        const isWish = wishlist.has(key);
+        const inTrip = itinerary.has(key);
         return `
     <div class="place-card" style="--cat-color:${catColor(p.category)}" onclick="openPlace('${state.slug}', ${realIdx}, true)">
-      <button class="wish-btn ${isWish ? 'active' : ''}" onclick="event.stopPropagation(); toggleWish('${state.slug}', ${realIdx}, this)" aria-label="Save ${p.name} to wishlist" aria-pressed="${isWish}">
+      <button class="wish-btn ${isWish ? 'active' : ''}" data-wish="${state.slug}|${realIdx}" onclick="event.stopPropagation(); toggleWish('${state.slug}', ${realIdx}, this)" aria-label="Save ${p.name} to wishlist" aria-pressed="${isWish}">
         ${isWish ? '\u2605' : ' \u2606'}
       </button>
       ${cardMedia(state, p)}
@@ -634,11 +652,11 @@
           <div><dt>Duration</dt><dd>Suggested: ${recommendedDuration(p)}</dd></div>
           <div><dt>Entry</dt><dd>${p.fee}</dd></div>
         </dl>
-        <a class="pc-map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.map)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" aria-label="View ${p.name} on Google Maps">&#x1F4CD; View on Map</a>
+        <a class="pc-map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.map)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" aria-label="View ${p.name} on Google Maps">&#x1F4CD; View on Map</a>
       </div>
       <div class="place-card-actions">
         <button class="pc-details-btn" type="button" onclick="event.stopPropagation(); openPlace('${state.slug}', ${realIdx}, true)">View details</button>
-        <button class="it-add-btn ${inTrip ? 'added' : ''}" type="button" onclick="event.stopPropagation(); toggleItinerary('${state.slug}', ${realIdx}, this)" aria-pressed="${inTrip}">${inTrip ? '\u2713 Added to trip' : '+ Add to trip'}</button>
+        <button class="it-add-btn ${inTrip ? 'added' : ''}" data-trip="${state.slug}|${realIdx}" type="button" onclick="event.stopPropagation(); toggleItinerary('${state.slug}', ${realIdx}, this)" aria-pressed="${inTrip}">${inTrip ? '\u2713 Added to trip' : '+ Add to trip'}</button>
         <a class="mmt-card-btn" href="${mmtLink(state, p)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" aria-label="Book a trip to ${p.name} on MakeMyTrip">&#x1F9F3; Book on MakeMyTrip</a>
       </div>
     </div>`;
@@ -695,7 +713,7 @@
       _modalLastFocus = document.activeElement;
       document.getElementById('modalBody').style.setProperty('--cat-color', catColor(p.category));
       document.getElementById('modalBody').innerHTML = `
-    <button class="wish-btn ${isWish ? 'active' : ''}" id="modalWishBtn" style="top:54px;right:18px;" onclick="onStarToggle('${stateSlug}', ${idx})" aria-label="Save ${p.name} to wishlist" aria-pressed="${isWish}">
+    <button class="wish-btn ${isWish ? 'active' : ''}" id="modalWishBtn" data-wish="${stateSlug}|${idx}" style="top:54px;right:18px;" onclick="onStarToggle('${stateSlug}', ${idx})" aria-label="Save ${p.name} to wishlist" aria-pressed="${isWish}">
       ${isWish ? '\u2605' : ' \u2606'}
     </button>
     <button class="modal-close" id="modalCloseBtn" onclick="closeModal()" aria-label="Close details">&times;</button>
@@ -716,10 +734,10 @@
     </div>
     ${tips.length ? `<div class="tips"><div class="k">Good to know</div><ul>${tips.map(t => `<li>${t}</li>`).join('')}</ul></div>` : ''}
     <div class="btn-row">
-      <a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.map)}" target="_blank" rel="noopener">&#x1F4CD; View on map</a>
+      <a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.map)}" target="_blank" rel="noopener noreferrer">&#x1F4CD; View on map</a>
       ${fromRegion ? `<a class="book-btn" href="${mmtLink(state, p)}" target="_blank" rel="noopener noreferrer" title="Book your trip to ${p.name} on MakeMyTrip">&#x1F9F3; Book Your Trip</a>` : ''}
-      <button class="modal-act ${isWish ? 'added' : ''}" id="modalWishTextBtn" type="button" onclick="toggleWishText('${stateSlug}', ${idx}, this)" aria-pressed="${isWish}">${isWish ? '\u2605 Saved to wishlist' : '\u2606 Add to Wishlist'}</button>
-      <button class="it-add-btn modal-trip-btn ${inTrip ? 'added' : ''}" type="button" onclick="toggleItinerary('${stateSlug}', ${idx}, this)" aria-pressed="${inTrip}">${inTrip ? '\u2713 Added to trip' : '+ Add to Trip'}</button>
+      <button class="modal-act ${isWish ? 'added' : ''}" id="modalWishTextBtn" data-wish="${stateSlug}|${idx}" type="button" onclick="toggleWishText('${stateSlug}', ${idx}, this)" aria-pressed="${isWish}">${isWish ? '\u2605 Saved to wishlist' : '\u2606 Add to Wishlist'}</button>
+      <button class="it-add-btn modal-trip-btn ${inTrip ? 'added' : ''}" data-trip="${stateSlug}|${idx}" type="button" onclick="toggleItinerary('${stateSlug}', ${idx}, this)" aria-pressed="${inTrip}">${inTrip ? '\u2713 Added to trip' : '+ Add to Trip'}</button>
     </div>
     ${nearby.length ? `<div class="nearby">
       <div class="k">Nearby in ${state.name}</div>
@@ -884,7 +902,11 @@
       searchInput.setAttribute('aria-activedescendant', activeMatch >= 0 ? 'sr-opt-' + activeMatch : '');
     }
 
-    searchInput.addEventListener('input', renderSearchResults);
+    let _searchTimer = null;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(_searchTimer);
+      _searchTimer = setTimeout(renderSearchResults, 120);
+    });
     searchResults.addEventListener('click', (e) => {
       const item = e.target.closest('.sr-item');
       if (item && item.dataset.idx != null && lastMatches[parseInt(item.dataset.idx, 10)]) {
@@ -990,7 +1012,7 @@
       panel.hidden = !show;
       btn.setAttribute('aria-expanded', show ? 'true' : 'false');
     }
-    function setDiscoverFilter(key, value) { DISCOVER[key] = value; applyDiscoverFilters(); }
+    function setDiscoverFilter(key, value) { DISCOVER[key] = value; syncDiscoverControls(); applyDiscoverFilters(); }
     function setDiscoverSort(value) { DISCOVER.sort = value; applyDiscoverFilters(); }
     function resetDiscoverFilters() {
       DISCOVER.region = 'all'; DISCOVER.state = 'all'; DISCOVER.category = 'all';
@@ -1022,6 +1044,18 @@
       if (key === 'popular') return 'Popular only';
       return val;
     }
+    function syncDiscoverControls() {
+      const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+      set('fRegion', DISCOVER.region);
+      set('fState', DISCOVER.state);
+      set('fCategory', DISCOVER.category);
+      set('fSeason', DISCOVER.season);
+      set('fType', DISCOVER.dtype);
+      const pop = document.getElementById('fPopular');
+      if (pop) pop.checked = DISCOVER.popular === 'yes';
+      const sort = document.getElementById('sortSelect');
+      if (sort) sort.value = DISCOVER.sort;
+    }
     function applyDiscoverFilters() {
       const box = document.getElementById('discoverResults');
       const pills = document.getElementById('activeFilters');
@@ -1029,10 +1063,9 @@
       if (!box) return;
       const popularSet = discoverPopularSet();
       let list = discoverAllPlaces().filter(({ state, place, idx }) => {
-        if (!state || state.hidden && DISCOVER.state !== state.slug) {
-          if (DISCOVER.state !== 'all' && DISCOVER.state !== state.slug) return false;
-          if (DISCOVER.state === 'all' && state.hidden) return false;
-        }
+        if (!state || !place) return false;
+        // Hidden states are only included when explicitly selected
+        if (state.hidden && DISCOVER.state !== state.slug) return false;
         if (DISCOVER.region !== 'all' && state.region !== DISCOVER.region) return false;
         if (DISCOVER.state !== 'all' && state.slug !== DISCOVER.state) return false;
         if (DISCOVER.category !== 'all' && place.category !== DISCOVER.category) return false;
@@ -1051,7 +1084,7 @@
         : `<span class="discover-count">Showing everything — add a filter to narrow it down.</span>`;
       count.textContent = `${list.length} place${list.length !== 1 ? 's' : ''} across ${stateCount} state${stateCount !== 1 ? 's' : ''}`;
       if (!list.length) {
-        box.innerHTML = `<div class="discover-empty">No places match these filters yet. Try widening the season or clearing one filter above.</div>`;
+        box.innerHTML = `<div class="discover-empty">No places match these filters yet. Try widening the season or clearing one filter above.<br><br><button class="discover-reset" type="button" onclick="resetDiscoverFilters()">Reset all filters</button></div>`;
         return;
       }
       const canWish = (typeof wishlist !== 'undefined');
@@ -1062,7 +1095,7 @@
         const inTrip = canTrip && itinerary.has(key);
         return `
       <div class="place-card" style="--cat-color:${catColor(place.category)}" onclick="openPlace('${state.slug}', ${idx}, true)">
-        <button class="wish-btn ${isWish ? 'active' : ''}" type="button" onclick="event.stopPropagation(); toggleWish('${state.slug}', ${idx}, this)" aria-label="Save ${place.name} to wishlist" aria-pressed="${isWish}">${isWish ? '\u2605' : ' \u2606'}</button>
+        <button class="wish-btn ${isWish ? 'active' : ''}" data-wish="${state.slug}|${idx}" type="button" onclick="event.stopPropagation(); toggleWish('${state.slug}', ${idx}, this)" aria-label="Save ${place.name} to wishlist" aria-pressed="${isWish}">${isWish ? '\u2605' : ' \u2606'}</button>
         ${cardMedia(state, place)}
         <div class="place-card-body">
           <div class="cat-label">${catLabel(place.category)} &middot; ${state.name}</div>
@@ -1073,11 +1106,11 @@
             <div><dt>Duration</dt><dd>Suggested: ${recommendedDuration(place)}</dd></div>
             <div><dt>Entry</dt><dd>${place.fee}</dd></div>
           </dl>
-          <a class="pc-map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.map)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" aria-label="View ${place.name} on Google Maps">&#x1F4CD; View on Map</a>
+          <a class="pc-map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.map)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" aria-label="View ${place.name} on Google Maps">&#x1F4CD; View on Map</a>
         </div>
         <div class="place-card-actions">
           <button class="pc-details-btn" type="button" onclick="event.stopPropagation(); openPlace('${state.slug}', ${idx}, true)">View details</button>
-          <button class="it-add-btn ${inTrip ? 'added' : ''}" type="button" onclick="event.stopPropagation(); toggleItinerary('${state.slug}', ${idx}, this)" aria-pressed="${inTrip}">${inTrip ? '\u2713 Added to trip' : '+ Add to trip'}</button>
+          <button class="it-add-btn ${inTrip ? 'added' : ''}" data-trip="${state.slug}|${idx}" type="button" onclick="event.stopPropagation(); toggleItinerary('${state.slug}', ${idx}, this)" aria-pressed="${inTrip}">${inTrip ? '\u2713 Added to trip' : '+ Add to trip'}</button>
           <a class="mmt-card-btn" href="${mmtLink(state, place)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" aria-label="Book a trip to ${place.name} on MakeMyTrip">&#x1F9F3; Book on MakeMyTrip</a>
         </div>
       </div>`;
@@ -1088,7 +1121,8 @@
       const sSel = document.getElementById('fState');
       if (!rSel || !sSel) return;
       rSel.innerHTML = `<option value="all">All regions</option>` + DATA.regions.map(r => `<option value="${r.key}">${r.name}</option>`).join('');
-      sSel.innerHTML = `<option value="all">All states</option>` + DATA.states.filter(s => !s.hidden).sort((a, b) => a.name.localeCompare(b.name)).map(s => `<option value="${s.slug}">${s.name}</option>`).join('');
+      sSel.innerHTML = `<option value="all">All states</option>` + DATA.states.slice().sort((a, b) => a.name.localeCompare(b.name)).map(s => `<option value="${s.slug}">${s.name}${s.hidden ? ' (UT / smaller state)' : ''}</option>`).join('');
+      syncDiscoverControls();
       applyDiscoverFilters();
     }
 
@@ -1099,7 +1133,7 @@
       const saved = localStorage.getItem('travelbharat-wishlist');
       if (saved) {
         const arr = JSON.parse(saved);
-        arr.forEach(item => wishlist.add(item));
+        if (Array.isArray(arr)) arr.forEach(item => { if (typeof item === 'string') wishlist.add(item); });
         updateWishCount();
       }
     } catch (e) { }
@@ -1130,12 +1164,11 @@
       const added = !wishlist.has(key);
       if (!added) {
         wishlist.delete(key);
-        if (btnEl) { btnEl.classList.remove('active'); btnEl.innerHTML = ' \u2606'; }
       } else {
         wishlist.add(key);
-        if (btnEl) { btnEl.classList.add('active'); btnEl.innerHTML = '\u2605'; }
       }
       updateWishCount();
+      syncWishButtons();
       // Persist
       try {
         localStorage.setItem('travelbharat-wishlist', JSON.stringify([...wishlist]));
@@ -1182,7 +1215,8 @@
     try {
       const saved = localStorage.getItem('travelbharat-itinerary');
       if (saved) {
-        JSON.parse(saved).forEach(k => itinerary.add(k));
+        const arr = JSON.parse(saved);
+        if (Array.isArray(arr)) arr.forEach(k => { if (typeof k === 'string') itinerary.add(k); });
         pruneItinerary();
       }
     } catch (e) { }
@@ -1213,11 +1247,7 @@
         itinerary.add(key);
       }
       updateItineraryUI();
-      if (btnEl) {
-        btnEl.classList.toggle('added', added);
-        btnEl.setAttribute('aria-pressed', added ? 'true' : 'false');
-        btnEl.textContent = added ? '\u2713 Added to trip' : '+ Add to trip';
-      }
+      syncTripButtons();
       showToast(added ? 'Added to itinerary' : 'Removed from itinerary');
     }
 
@@ -1226,17 +1256,6 @@
     }
     function tripStopHours(place) {
       return TRIP_HOURS[recommendedDuration(place)] || 4;
-    }
-    function syncTripButtons() {
-      const view = document.getElementById('stateView');
-      if (view && view.classList.contains('active') && currentStateSlug) {
-        const st = DATA.states.find(s => s.slug === currentStateSlug);
-        if (st) renderPlaces(st);
-      }
-      const disc = document.getElementById('discoverResults');
-      if (disc && document.getElementById('discover') && document.getElementById('discover').style.display !== 'none') {
-        try { applyDiscoverFilters(); } catch (e) { }
-      }
     }
     function setTripPace(val) {
       tripPace = Math.min(4, Math.max(2, parseInt(val, 10) || 3));
@@ -1343,7 +1362,7 @@
             <div class="trip-stop-main">
               <div class="stop-name">${s.place.name}</div>
               <div class="stop-cat">${catLabel(s.place.category)} \u2022 ${s.state.name} \u2022 ${recommendedDuration(s.place)}</div>
-              <a class="trip-map" href="${tripStopMapsUrl(s.state.name, s.place)}" target="_blank" rel="noopener">View on Google Maps</a>
+              <a class="trip-map" href="${tripStopMapsUrl(s.state.name, s.place)}" target="_blank" rel="noopener noreferrer">View on Google Maps</a>
             </div>
             <div class="trip-stop-btns no-print">
               <button type="button" onclick="moveItinerary('${s.key}', -1)" aria-label="Move ${s.place.name} earlier"${si === 0 && di === 0 ? ' disabled' : ''}>\u2191</button>
@@ -1435,13 +1454,34 @@
       return out;
     }
 
-    // refresh the stars on the state page behind the panel
+    // refresh the stars on every visible copy (cards, discover, modal) without full re-render
     function syncWishButtons() {
-      const view = document.getElementById('stateView');
-      if (view && view.classList.contains('active') && currentStateSlug) {
-        const st = DATA.states.find(s => s.slug === currentStateSlug);
-        if (st) renderPlaces(st);
+      document.querySelectorAll('[data-wish]').forEach(btn => {
+        const key = btn.getAttribute('data-wish');
+        const on = wishlist.has(key);
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        if (btn.id !== 'modalWishTextBtn') btn.innerHTML = on ? '\u2605' : ' \u2606';
+      });
+      const textBtn = document.getElementById('modalWishTextBtn');
+      if (textBtn) {
+        const key = textBtn.getAttribute('data-wish');
+        if (key) {
+          const on = wishlist.has(key);
+          textBtn.classList.toggle('added', on);
+          textBtn.innerHTML = on ? '\u2605 Saved to wishlist' : '\u2606 Add to Wishlist';
+          textBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        }
       }
+    }
+    function syncTripButtons() {
+      document.querySelectorAll('[data-trip]').forEach(btn => {
+        const key = btn.getAttribute('data-trip');
+        const on = itinerary.has(key);
+        btn.classList.toggle('added', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        btn.textContent = on ? '\u2713 Added to trip' : '+ Add to trip';
+      });
     }
 
     function renderWishlist() {
@@ -1492,7 +1532,7 @@
           </div>
           <div class="wl-actions">
             <button class="wl-view" onclick="viewWishPlace('${slug}', ${idx})">View details</button>
-            <button class="it-add-btn wl-trip ${inTrip ? 'added' : ''}" type="button" onclick="toggleItinerary('${slug}', ${idx}, this)" aria-pressed="${inTrip}">${inTrip ? '\u2713 Added to trip' : '+ Add to trip'}</button>
+            <button class="it-add-btn wl-trip ${inTrip ? 'added' : ''}" data-trip="${slug}|${idx}" type="button" onclick="toggleItinerary('${slug}', ${idx}, this)" aria-pressed="${inTrip}">${inTrip ? '\u2713 Added to trip' : '+ Add to trip'}</button>
             <a class="wl-book" href="${mmtLink(state, p)}" target="_blank" rel="noopener noreferrer" aria-label="Book a trip to ${p.name} on MakeMyTrip">&#x1F9F3; MakeMyTrip</a>
             <button class="wl-remove" onclick="removeWish('${slug}', ${idx})" aria-label="Remove ${p.name} from wishlist">Remove</button>
           </div>
@@ -1563,6 +1603,9 @@
         const s = document.getElementById(id);
         if (s) s.style.display = '';
       });
+      // Reset other filters so a category browse is predictable, then apply category
+      DISCOVER.region = 'all'; DISCOVER.state = 'all'; DISCOVER.season = 'all';
+      DISCOVER.dtype = 'all'; DISCOVER.popular = 'all';
       setDiscoverFilter('category', cat);
       const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const target = document.getElementById('discover');

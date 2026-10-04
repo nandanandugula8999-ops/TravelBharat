@@ -6,14 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TravelBharat &#8212; Explore India, State by State</title>
   <meta name="description" content="TravelBharat is a free state-by-state field guide to India's tourist places — heritage forts, nature parks, pilgrimage towns and adventure valleys, with timings, fees and maps.">
-  <link rel="canonical" href="https://travelbharat.example.com/index7.html">
+  <link rel="canonical" href="https://travel-bharattt.netlify.app/index7.html">
   <meta name="theme-color" content="#1E2A45">
   <meta name="color-scheme" content="light dark">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="TravelBharat">
   <meta property="og:title" content="TravelBharat — Explore India, State by State">
   <meta property="og:description" content="A free field guide to India's tourist places, organised state by state — with timings, fees, maps, wishlist and trip planner.">
-  <meta property="og:image" content="images/favicon.png">
+  <meta property="og:url" content="https://travel-bharattt.netlify.app/index7.html">
+  <meta property="og:image" content="https://travel-bharattt.netlify.app/images/favicon.png">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="TravelBharat — Explore India, State by State">
   <meta name="twitter:description" content="A free field guide to India's tourist places, organised state by state.">
@@ -32,12 +33,12 @@
 
   <header>
     <div class="wrap bar">
-      <div class="wordmark" onclick="goHome()">Travel<span>Bharat</span></div>
+      <div class="wordmark" role="button" tabindex="0" aria-label="TravelBharat home" onclick="goHome()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();goHome();}">Travel<span>Bharat</span></div>
       <div class="search-shell">
         <input id="searchInput" type="text" placeholder="Search a place, state, or category" autocomplete="off"
           role="combobox" aria-expanded="false" aria-controls="searchResults" aria-autocomplete="list"
           aria-label="Search places, states or categories">
-        <button class="search-clear" id="searchClear" type="button" aria-label="Clear search" tabindex="-1">&times;</button>
+        <button class="search-clear" id="searchClear" type="button" aria-label="Clear search">&times;</button>
         <div class="search-results" id="searchResults" role="listbox" aria-label="Search suggestions"></div>
       </div>
       <button class="nav-toggle" id="navToggle" aria-label="Open navigation menu" aria-expanded="false"
@@ -227,7 +228,7 @@
 
   <div class="state-view" id="stateView"></div>
 
-  <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-label="Destination details">
     <div class="modal" id="modalBody"></div>
   </div>
 
@@ -243,9 +244,9 @@
     </div>
   </div>
 
-  <div class="itinerary-modal" id="itineraryModal">
+  <div class="itinerary-modal" id="itineraryModal" role="dialog" aria-modal="true" aria-labelledby="itineraryTitle">
     <div class="it-inner">
-      <button class="it-close" onclick="closeItineraryModal()" aria-label="Close">&times;</button>
+      <button class="it-close" onclick="closeItineraryModal()" aria-label="Close trip planner">&times;</button>
       <h3 id="itineraryTitle">Your Trip Plan</h3>
       <div class="it-meta" id="itineraryMeta" aria-live="polite"></div>
       <div id="itineraryBody"></div>
