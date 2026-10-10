@@ -674,6 +674,153 @@
       return tips.slice(0, 3);
     }
 
+    /* ================= REVIEWS (visited + photo mandatory, localStorage) ================= */
+    const REVIEWS_KEY = 'travelbharat-reviews-v1';
+    let REVIEWS = {};
+    try {
+      REVIEWS = JSON.parse(localStorage.getItem(REVIEWS_KEY) || '{}') || {};
+    } catch (e) { REVIEWS = {}; }
+    function reviewKey(slug, idx) { return slug + '|' + idx; }
+    function getReviews(slug, idx) {
+      const arr = REVIEWS[reviewKey(slug, idx)];
+      return Array.isArray(arr) ? arr : [];
+    }
+    function saveReviews() {
+      try { localStorage.setItem(REVIEWS_KEY, JSON.stringify(REVIEWS)); } catch (e) {
+        showToast('Storage full — oldest review photos were trimmed');
+      }
+    }
+    function avgRating(list) {
+      if (!list.length) return 0;
+      return list.reduce((a, r) => a + (r.rating || 0), 0) / list.length;
+    }
+    function starsOut(n) {
+      let s = '';
+      for (let i = 1; i <= 5; i++) s += i <= Math.round(n) ? '★' : '☆';
+      return s;
+    }
+    function renderReviews(stateSlug, idx) {
+      const wrap = document.getElementById('reviewsWrap');
+      if (!wrap) return;
+      const list = getReviews(stateSlug, idx).slice().sort((a, b) => b.ts - a.ts);
+      const avg = avgRating(list);
+      wrap.innerHTML = `
+      <div class="rev-head">
+        <div>
+          <div class="rev-title">Visitor reviews</div>
+          <div class="rev-sub">${list.length ? `<span class="rev-stars">${starsOut(avg)}</span> ${avg.toFixed(1)} · ${list.length} review${list.length !== 1 ? 's' : ''}` : 'No reviews yet — be the first after you visit.'}</div>
+        </div>
+        <div class="rev-badge">📷 Photo required</div>
+      </div>
+      ${list.length ? `<div class="rev-list">${list.map(r => `
+        <article class="rev-card">
+          <img class="rev-photo" src="${r.img}" alt="Visitor photo of ${escHtml(r.placeName)} by ${escHtml(r.name)}" loading="lazy">
+          <div class="rev-body">
+            <div class="rev-meta"><b>${escHtml(r.name)}</b><span> · ${escHtml(r.dateStr)}</span></div>
+            <div class="rev-stars" aria-label="${r.rating} out of 5 stars">${starsOut(r.rating)}</div>
+            <p class="rev-text">${escHtml(r.text)}</p>
+            <div class="rev-visited">✓ Visited${r.visitDate ? ' · ' + escHtml(r.visitDate) : ''}</div>
+          </div>
+          <button class="rev-del" type="button" onclick="deleteReview('${stateSlug}', ${idx}, ${r.ts})" aria-label="Delete review by ${escHtml(r.name)}">Remove</button>
+        </article>`).join('')}</div>`
+      : `<div class="rev-empty">No photo reviews yet. Reviews only count after a visit with a photo — no photo, no review.</div>`}
+      <form class="rev-form" onsubmit="return submitReview(event, '${stateSlug}', ${idx})">
+        <div class="rev-form-title">Share your visit — photo mandatory</div>
+        <div class="rev-grid">
+          <label>Your name<input name="revName" maxlength="40" placeholder="e.g. Ananya" required></label>
+          <label>Visit date<input name="revVisit" type="month" required></label>
+        </div>
+        <div class="rev-rate" role="radiogroup" aria-label="Your rating">
+          ${[5,4,3,2,1].map(v => `<label><input type="radio" name="revRating" value="${v}" ${v===5?'checked':''}> ${v}★</label>`).join('')}
+        </div>
+        <label class="rev-label">Your review<textarea name="revText" rows="3" maxlength="600" placeholder="What was it really like? Crowds, timing, tips…" required></textarea></label>
+        <label class="rev-label">Your visit photo (required, JPG/PNG ≤ 5MB)<input name="revImg" type="file" accept="image/*" required onchange="previewReviewImg(this)"><span class="rev-hint">No photo = review will be rejected. This proves you were there.</span></label>
+        <img class="rev-preview" id="revPreview" alt="" hidden>
+        <label class="rev-check"><input type="checkbox" name="revVisited" required> I confirm I have visited this place.</label>
+        <div class="rev-err" id="revErr" role="alert" hidden></div>
+        <button class="rev-submit" type="submit">Post review with photo</button>
+      </form>`;
+    }
+    function previewReviewImg(input) {
+      const prev = document.getElementById('revPreview');
+      const err = document.getElementById('revErr');
+      if (!prev) return;
+      const f = input.files && input.files[0];
+      if (!f) { prev.hidden = true; return; }
+      if (!f.type.startsWith('image/')) { if (err) { err.hidden = false; err.textContent = 'That file is not an image.'; } input.value = ''; return; }
+      if (f.size > 5 * 1024 * 1024) { if (err) { err.hidden = false; err.textContent = 'Image must be ≤ 5MB.'; } input.value = ''; return; }
+      if (err) err.hidden = true;
+      const rd = new FileReader();
+      rd.onload = () => { prev.src = rd.result; prev.hidden = false; };
+      rd.readAsDataURL(f);
+    }
+    function downscaleImage(dataUrl, maxW) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const scale = Math.min(1, maxW / img.width);
+          const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+          const c = document.createElement('canvas');
+          c.width = w; c.height = h;
+          c.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(c.toDataURL('image/jpeg', 0.82));
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+      });
+    }
+    function submitReview(ev, stateSlug, idx) {
+      ev.preventDefault();
+      const form = ev.target;
+      const err = document.getElementById('revErr');
+      const fail = (m) => { if (err) { err.hidden = false; err.textContent = m; } showToast(m); return false; };
+      const name = (form.revName.value || '').trim();
+      const text = (form.revText.value || '').trim();
+      const rating = parseInt((form.querySelector('input[name="revRating"]:checked') || {}).value || '0', 10);
+      const visitDate = form.revVisit.value || '';
+      const visited = form.revVisited.checked;
+      const file = form.revImg.files && form.revImg.files[0];
+      if (name.length < 2) return fail('Please add your name.');
+      if (!rating || rating < 1 || rating > 5) return fail('Please pick a star rating.');
+      if (text.length < 10) return fail('Please write at least 10 characters.');
+      if (!visited) return fail('Please confirm you visited this place.');
+      if (!visitDate) return fail('Please add your visit month.');
+      if (!file) return fail('A visit photo is required — no photo, no review.');
+      if (!file.type.startsWith('image/')) return fail('Photo must be an image file.');
+      if (file.size > 5 * 1024 * 1024) return fail('Photo must be ≤ 5MB.');
+      const btn = form.querySelector('.rev-submit');
+      if (btn) { btn.disabled = true; btn.textContent = 'Posting…'; }
+      const state = DATA.states.find(s => s.slug === stateSlug);
+      const place = state && state.places[idx];
+      const rd = new FileReader();
+      rd.onload = async () => {
+        const small = await downscaleImage(rd.result, 900);
+        const key = reviewKey(stateSlug, idx);
+        if (!Array.isArray(REVIEWS[key])) REVIEWS[key] = [];
+        REVIEWS[key].push({
+          name, text, rating, visitDate, img: small,
+          ts: Date.now(),
+          dateStr: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+          placeName: place ? place.name : stateSlug
+        });
+        // keep storage safe: max 30 reviews per place, newest kept
+        if (REVIEWS[key].length > 30) REVIEWS[key] = REVIEWS[key].slice(-30);
+        saveReviews();
+        renderReviews(stateSlug, idx);
+        showToast('Review posted — thanks for visiting!');
+      };
+      rd.onerror = () => { if (btn) { btn.disabled = false; btn.textContent = 'Post review with photo'; } fail('Could not read photo. Try another file.'); };
+      rd.readAsDataURL(file);
+      return false;
+    }
+    function deleteReview(stateSlug, idx, ts) {
+      const key = reviewKey(stateSlug, idx);
+      REVIEWS[key] = getReviews(stateSlug, idx).filter(r => r.ts !== ts);
+      saveReviews();
+      renderReviews(stateSlug, idx);
+      showToast('Review removed');
+    }
+
     let _modalLastFocus = null;
     function onStarToggle(stateSlug, idx) {
       const textBtn = document.getElementById('modalWishTextBtn');
@@ -743,6 +890,7 @@
       <div class="k">Nearby in ${state.name}</div>
       ${nearby.map(n => `<div class="nearby-item" role="button" tabindex="0" onclick="openPlace('${state.slug}', ${state.places.indexOf(n)}, true)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openPlace('${state.slug}', ${state.places.indexOf(n)}, true);}">${n.name}</div>`).join('')}
     </div>` : ''}
+    <div class="reviews" id="reviewsWrap" aria-live="polite"></div>
     <div class="modal-foot"><button class="modal-foot-close" type="button" onclick="closeModal()">Close</button></div>
   `;
       const wasOpen = overlay.classList.contains('open');
@@ -750,6 +898,7 @@
       if (!wasOpen) lockScroll();
       const closeBtn = document.getElementById('modalCloseBtn');
       if (closeBtn) closeBtn.focus();
+      renderReviews(stateSlug, idx);
     }
 
     function closeModal() {

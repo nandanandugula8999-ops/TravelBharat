@@ -2826,4 +2826,46 @@
         overflow-y: auto;
       }
     }
+
+    /* ---------- Visitor reviews (photo-mandatory) ---------- */
+    .reviews { margin: 26px 40px 0; border-top: 1px solid var(--line); padding-top: 20px; }
+    .rev-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .rev-title { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 500; }
+    .rev-sub { font-size: 13.5px; color: var(--ink-soft); margin-top: 2px; }
+    .rev-stars { color: var(--gold); font-weight: 700; letter-spacing: 1px; }
+    .rev-badge { font-size: 11.5px; font-weight: 700; color: var(--teal); background: var(--teal-bg); border: 1px solid var(--teal); border-radius: 999px; padding: 5px 12px; white-space: nowrap; }
+    .rev-list { display: grid; gap: 12px; margin-bottom: 18px; }
+    .rev-card { display: grid; grid-template-columns: 110px 1fr auto; gap: 14px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--paper-raised); padding: 12px; align-items: start; }
+    .rev-photo { width: 110px; height: 90px; object-fit: cover; border-radius: 6px; display: block; background: var(--line); }
+    .rev-meta { font-size: 13.5px; } .rev-meta span { color: var(--ink-soft); font-size: 12.5px; }
+    .rev-text { font-size: 14px; color: var(--ink-soft); margin: 6px 0; line-height: 1.55; white-space: pre-wrap; }
+    .rev-visited { font-size: 12px; font-weight: 600; color: var(--teal); }
+    .rev-del { background: none; border: none; color: var(--ink-soft); font-size: 12.5px; text-decoration: underline; cursor: pointer; padding: 4px; }
+    .rev-del:hover { color: var(--maroon); }
+    .rev-empty { border: 1px dashed var(--line-strong); border-radius: var(--radius-md); padding: 18px; font-size: 13.5px; color: var(--ink-soft); text-align: center; margin-bottom: 18px; }
+    .rev-form { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--paper-raised); padding: 18px; display: grid; gap: 12px; }
+    .rev-form-title { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 500; }
+    .rev-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .rev-form label, .rev-label { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); }
+    .rev-form input:not([type="radio"]):not([type="checkbox"]):not([type="file"]), .rev-form textarea, .rev-form input[type="month"] { font-family: 'Work Sans', sans-serif; font-size: 14px; color: var(--ink); background: var(--paper); border: 1px solid var(--line-strong); border-radius: 6px; padding: 10px 12px; }
+    .rev-form input:focus, .rev-form textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(169,120,47,.18); }
+    .rev-rate { display: flex; gap: 8px; flex-wrap: wrap; }
+    .rev-rate label { flex-direction: row; align-items: center; gap: 5px; border: 1px solid var(--line-strong); border-radius: 999px; padding: 6px 12px; cursor: pointer; font-size: 13px; color: var(--ink); }
+    .rev-rate label:has(input:checked) { background: var(--gold-bg); border-color: var(--gold); color: var(--gold); font-weight: 700; }
+    .rev-hint { font-weight: 400; font-size: 12px; }
+    .rev-preview { width: 100%; max-height: 220px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); }
+    .rev-check { flex-direction: row !important; align-items: center; gap: 10px !important; font-size: 13.5px !important; color: var(--ink) !important; cursor: pointer; }
+    .rev-check input { width: 18px; height: 18px; accent-color: var(--teal); }
+    .rev-err { background: var(--maroon-bg); color: var(--maroon); border: 1px solid var(--maroon); border-radius: 6px; padding: 10px 12px; font-size: 13px; font-weight: 600; }
+    .rev-err[hidden] { display: none; }
+    .rev-submit { background: var(--ink); color: var(--paper); border: 1.5px solid var(--ink); border-radius: 6px; padding: 12px 18px; font-family: 'Work Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .rev-submit:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
+    .rev-submit:disabled { opacity: .6; cursor: wait; }
+    @media (max-width: 640px) {
+      .reviews { margin: 22px 22px 0; }
+      .rev-card { grid-template-columns: 84px 1fr; }
+      .rev-photo { width: 84px; height: 70px; }
+      .rev-del { grid-column: 1 / -1; justify-self: end; }
+      .rev-grid { grid-template-columns: 1fr; }
+    }
   

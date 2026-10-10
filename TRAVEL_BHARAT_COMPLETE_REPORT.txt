@@ -1,0 +1,304 @@
+
+TRAVELBHARAT - COMPLETE WEBSITE REPORT
+======================================
+
+
+  Generated: 2026-10-04 (UTC) - Source folder: C:\DOPE SHIT\unified mentor project-1
+  Live site: https://travel-bharattt.netlify.app/ - Repo: https://github.com/nandanandugula8999-ops/TravelBharat
+  Stack: zero-build static site - HTML + CSS + vanilla JS. No npm, no bundler, no backend, no database, no auth.
+
+Audited entry point is index.html (previously index7.html; the file was renamed - see S12).
+All facts below were verified against the actual files in this folder unless marked "not browser-verified".
+
+----------------------------------------------------------------------
+
+
+1. FILE INVENTORY
+-----------------
+
+
+| File / folder | Size (approx) | Role |
+|---|---|---|
+| index.html | 24.1 KB | All markup: header, hero, marquee, gallery, regions, discover, category, gems, plan, state view, modals, FAQ, footer, toasts, JSON-LD |
+| app.js | 115.9 KB | All application logic + embedded dataset (DATA, GALLERY, DESTINATION_IMAGES, IMG_DIMS) |
+| styles.css | 80.2 KB | All styling: base + dark mode + responsive + polish/WOW/QA layers |
+| theme.js | 0.3 KB | Blocking head script: restores travelbharat-theme before first paint (no theme flash) |
+| README.md | 7.9 KB | Project docs (still references index7.html - needs rename, see S12) |
+| IMAGE_DOWNLOAD_REPORT.md | 20.5 KB | Per-image Wikimedia Commons source/license table, 67 destinations + review list |
+| data/image-sources.json | - | Image source data (see folder) |
+| images/places/ | 68 files | 67 destination images (66 .webp + taj-mahal.jpg) + fallback.webp safety net |
+| images/raw/ | - | Standalone source photos (.avif, not referenced by the app) |
+| images/favicon.png | - | Site icon, referenced as favicon + og:image |
+| .gitignore | ~0 KB | Git ignore rules |
+
+Load order in index.html: styles.css + blocking theme.js in <head>; app.js just before FAQ section at end of <body>; Google Fonts (Fraunces + Work Sans) via fonts.googleapis.com with preconnect.
+
+----------------------------------------------------------------------
+
+
+2. INFORMATION ARCHITECTURE (PAGE SECTIONS, IN ORDER)
+-----------------------------------------------------
+
+
+1. Skip link (Skip to destinations -> #regionsWrap)
+2. Sticky glass header: wordmark (home), live search + clear, hamburger (?1060px), nav (Home, Destinations ? 6 regions, Categories ? 4, Plan Trip, FAQ), theme toggle, wishlist button + count badge
+3. Hero (#homeHero): badge, headline, sub-text, region quick-jump (6 buttons), CTAs (Start exploring -> #regionsWrap, Plan my trip), live coverage stats (computed from DATA)
+4. Marquee ticker (decorative, aria-hidden): visible state names x2 for infinite scroll
+5. Popular destinations gallery (#galleryGrid): 5 featured cards
+6. Regions -> state tiles (#regionsWrap): 6 region blocks, 21 visible state tiles
+7. Discover (#discover / "Find your destination"): Filter button + collapsible panel (region, state, category, season, destination type, popular-only), active-filter pills, result count, sort (Recommended / Name / State / Category), Reset, results grid (max 24 cards)
+8. Explore by category (#browseCategory): 4 cards with live place counts (visible states only)
+9. Hidden gems (#hiddenGems / #gemsGrid): 6 cards - first place of the first 6 hidden states
+10. Plan trip banner (#planTrip): explainer + tips + live saved-count + Open trip planner
+11. State view (#stateView, hidden until openState()): back link, header, meta, count, tagline, category chips, itinerary banner, place list
+12. Destination modal (#modalOverlay + #modalBody), wishlist modal (#wishlistModal), itinerary modal (#itineraryModal), toast stack (#toastStack)
+13. FAQ (#faqs): 8 accordion cards
+14. Footer (.site-footer): brand + tagline, Explore / Categories / Useful link columns, (c) 2026 TravelBharat
+15. JSON-LD: WebSite + FAQPage (8 Q&A, matches visible FAQ)
+
+----------------------------------------------------------------------
+
+
+3. DATASET - COMPLETE BREAKDOWN (VERIFIED BY PARSING APP.JS)
+------------------------------------------------------------
+
+
+- States/UTs: 36 total - 21 visible, 15 hidden (hidden:true states are in data + search + gems, excluded from tiles and default discover)
+- Places: 67 total - 41 visible, 26 hidden
+- Regions: 6 - Categories: 4 (heritage, nature, religious, adventure)
+- No duplicate slugs, no missing required fields, no missing image files, all gallery indexes resolve.
+
+
+3.1 Regions
+
+
+| Key | Name | Blurb |
+|---|---|---|
+| north | North | Himalayan passes, Mughal capitals, desert forts. |
+| west | West | Coastline, salt flats, and the Deccan trap hills. |
+| south | South | Temple towns, hill stations, backwaters. |
+| east | East | River deltas, tribal heartlands, colonial ports. |
+| northeast | Northeast | Living root bridges and cloud forests. |
+| central | Central | Sandstone temples and tiger forests. |
+
+
+3.2 Categories
+
+
+| Key | Label | Used for |
+|---|---|---|
+| heritage | Heritage | Forts, palaces, cave temples, memorials |
+| nature | Nature | Parks, beaches, backwaters, lakes, falls |
+| religious | Religious (shown as "Pilgrimage" in some UI) | Temples, shrines, ghats, monasteries |
+| adventure | Adventure | Treks, passes, valleys, deserts |
+
+Category drives: card top-border color + badge, modal accent, recommendedDuration() suggestion (Heritage->Half day, Religious->2-3 hours, Adventure->Full day, else Half-full day), trip-hour estimates (4 / 2.5 / 7 / 5 h), generic travel tips.
+
+
+3.3 Visible states (21) with place counts
+
+
+| State (slug) | Region | Capital | Places |
+|---|---|---|---|
+| Rajasthan (rajasthan) | north | Jaipur | 3 - Amber Fort (heritage), Jaisalmer Fort (heritage), Thar Desert Safari Sam Dunes (adventure) |
+| Uttar Pradesh (uttar-pradesh) | north | Lucknow | 2 - Taj Mahal (heritage), Varanasi Ghats (religious) |
+| Himachal Pradesh (himachal-pradesh) | north | Shimla | 2 - Spiti Valley (adventure), Rohtang Pass (nature) |
+| Delhi (delhi) | north | - | 2 - Humayun's Tomb, Qutub Minar (both heritage) |
+| Jammu & Kashmir (jammu-kashmir) | north | Srinagar (summer) | 2 - Dal Lake (nature), Gulmarg (adventure) |
+| Uttarakhand (uttarakhand) | north | Dehradun | 3 - Rishikesh (religious), Valley of Flowers (nature), Nainital (nature) |
+| Punjab (punjab) | north | Chandigarh | 2 - Golden Temple (religious), Wagah Border (heritage) |
+| Haryana (haryana) | north | Chandigarh | 2 - Kurukshetra (religious), Sultanpur National Park (nature) |
+| Ladakh (ladakh) | north | Leh | 2 - Pangong Tso (nature), Nubra Valley (adventure) |
+| Maharashtra (maharashtra) | west | Mumbai | 2 - Ajanta Caves (heritage), Ellora Caves (religious) |
+| Gujarat (gujarat) | west | Gandhinagar | 2 - Rann of Kutch (nature), Gir National Park (nature) |
+| Goa (goa) | west | Panaji | 2 - Basilica of Bom Jesus (religious), Palolem Beach (nature) |
+| Kerala (kerala) | south | Thiruvananthapuram | 2 - Alleppey Backwaters (nature), Munnar (nature) |
+| Tamil Nadu (tamil-nadu) | south | Chennai | 2 - Meenakshi Amman Temple (religious), Mahabalipuram Shore Temple (heritage) |
+| Karnataka (karnataka) | south | Bengaluru | 2 - Hampi (heritage), Coorg Kodagu (nature) |
+| Telangana (telangana) | south | Hyderabad | 1 - Golconda Fort (heritage) |
+| West Bengal (west-bengal) | east | Kolkata | 2 - Sundarbans National Park (nature), Victoria Memorial (heritage) |
+| Odisha (odisha) | east | Bhubaneswar | 1 - Konark Sun Temple (heritage) |
+| Meghalaya (meghalaya) | northeast | Shillong | 2 - Double Decker Living Root Bridge (nature), Cherrapunji Sohra (nature) |
+| Assam (assam) | northeast | Dispur | 1 - Kaziranga National Park (nature) |
+| Madhya Pradesh (madhya-pradesh) | central | Bhopal | 2 - Khajuraho Group of Monuments (religious), Bandhavgarh National Park (nature) |
+
+
+3.4 Hidden states/UTs (15) with place counts - total 26 places
+
+
+Dadra and Nagar Haveli and Daman and Diu (2), Andhra Pradesh (2), Andaman and Nicobar Islands (2), Lakshadweep (1 - Agatti Island), Puducherry (2), Chandigarh (2), Bihar (2), Jharkhand (2), Chhattisgarh (2), Sikkim (2), Arunachal Pradesh (1 - Tawang Monastery), Manipur (1 - Loktak Lake), Mizoram (1 - Reiek Peak), Nagaland (2), Tripura (2).
+
+
+3.5 Place record shape
+
+
+{ name, category, img, desc, history, best, fee, timings, map } + parent state { slug, name, region, capital, tagline, heroImg, hidden? }.
+heroImg reuses the state's own first-place image (related-only reuse). Hero backdrop reuses images/places/taj-mahal.jpg. No unrelated destination shares a file. IMG_DIMS stores width/height per image to prevent layout shift.
+
+
+3.6 Gallery (5 featured)
+
+
+Taj Mahal (UP #0), Amber Fort (Rajasthan #0), Palolem Beach (Goa #1), Nubra Valley (Ladakh #1), Tawang Monastery (Arunachal #0).
+
+
+3.7 Images & attribution
+
+
+All 67 images are local WebP (except Taj .jpg 1920x1262) sourced from Wikimedia Commons; full per-image source/license/author table lives in IMAGE_DOWNLOAD_REPORT.md. 13 files flagged "REVIEW" (weak title match - glance and swap if misrepresenting): Amber Fort, Auroville, Bandhavgarh, Golconda Fort, Hampi, Kaziranga, Kurukshetra, Promenade Beach & French Quarter, Rishikesh, Spiti Valley, Sultanpur NP, Thar Desert Safari, Vasona Lion Safari Park. fallback.webp exists as the broken-image safety net (now wired via a global error handler).
+
+----------------------------------------------------------------------
+
+
+4. FEATURE-BY-FEATURE BEHAVIOR
+------------------------------
+
+
+4.1 Search (header)
+
+- Index built by buildSearchIndex(): every state (label=name, sub=capital) + every place (label=name, sub="State - Category").
+- Matching: trimmed, case-insensitive substring on label or sub; max 8 dropdown results; empty query closes dropdown; no-match shows escaped query + hint.
+- Keyboard: [up]/[down] cycles (highlightMatch, aria-activedescendant), Enter opens highlighted (or single) result, Esc clears text first then closes. Click-outside closes. 120 ms debounce on input.
+- Selecting a state -> openState(slug); a place -> openState then openPlace(slug, idx) after 60 ms. Input cleared after navigation.
+- Search-clear (x) button appears while typing (.has-text), now keyboard-focusable.
+
+
+4.2 Discover ("Find your destination")
+
+- State: DISCOVER = { region, state, category, season, dtype, popular, sort } (all default all/recommended).
+- Region + State dropdowns (state list now includes all 36, hidden suffixed "(UT / smaller state)"), Category (All/Heritage/Nature/Pilgrimage/Adventure), Best season (Any/Winter Oct-Mar/Summer Apr-Jun/Monsoon Jul-Sep, parsed from best month names with range expansion), Destination type (keyword-derived: forts/beach/sacred/water/hills/wildlife), Popular-only checkbox (membership in GALLERY slug|idx set), Sort (Recommended=insertion, Name, State, Category).
+- Hidden states excluded unless explicitly chosen in the State dropdown.
+- Active filters render as removable pills (clearDiscoverKey); count line reads "N places across M states" and matches the full filtered list; grid renders max 24 cards + "Showing 24 of N" note; empty state has a Reset all filters button.
+- browseCategory(cat) resets the other five filters then sets category and smooth-scrolls to #discover; dropdowns stay in sync via syncDiscoverControls().
+
+
+4.3 State view + category chips
+
+- openState(slug) records home scroll, hides home sections, renders header/meta/count/tagline, chips (All places + present categories), itinerary banner, place list; unknown slug -> toast, no crash.
+- setFilter(cat) re-renders; empty category shows "No places in this category yet" + Show-all button.
+
+
+4.4 Place cards (state view + discover)
+
+Media (lazy, async decode, sized) + category badge, category-state label, name, 3-line desc, meta table (Best time / Suggested duration / Entry), View-on-Map link (Google Maps search/?api=1&query=, rel="noopener noreferrer"), View details, + Add to trip (toggles to [done] Added), Book on MakeMyTrip (per-place mmtLink: holidays-india/<city>-travel-packages.html from map town with 7 aliases, e.g. Old Goa->goa, Havelock/Port Blair->andaman, Nongriat->meghalaya, Kurukshetra->haryana, Silvassa->daman, Himachal Pradesh->himachal; falls back to MMT homepage).
+
+
+4.5 Destination modal
+
+Image, category, title, state, desc + history, fact grid (Best time / Recommended duration / Timings / Entry fee / Location / State), generic Good-to-know tips (category-based + permit hint), button row (View on map, Book Your Trip when opened with booking context, Add-to-Wishlist toggle, Add-to-Trip toggle), up-to-3 Nearby-in-state, Close footer button. Overlay click, Esc, x all close; focus trap keeps Tab inside; focus returns to opener; nesting-safe scroll lock (lockScroll counter).
+
+
+4.6 Wishlist
+
+- wishlist: Set("slug|idx"), key travelbharat-wishlist; Array + string guards on load; stale keys (deleted data) pruned on render.
+- Toggle from any card/modal/wishlist-row; all visible copies update without re-render (data-wish sync, focus preserved); header count + aria-label update with pop animation; toasts on add/remove.
+- Panel: count meta, two-tap Clear all (3 s disarm), per-row View details / Add-to-trip / MakeMyTrip / Remove, empty state with Start-exploring CTA. No personal data stored.
+
+
+4.7 Trip planner
+
+- itinerary: Set("slug|idx") (insertion = user order), key travelbharat-itinerary; validated + pruned on load.
+- Counts in state banner + plan section stay in sync; all Add-to-trip buttons sync via data-trip.
+- Planner modal: empty state with CTA; otherwise Your N-Day Trip Plan + "N places - D days - S states - ~Hh planned" (hours are labeled estimates from category, never distances/prices). Pace selector Relaxed 2 / Classic 3 / Packed 4 per day (clamped 2-4); per-stop Morning/Afternoon/Evening/Late-evening slot labels; per-day ~hours; per-stop Maps link; [up]/[down] reorder (ends disabled), per-stop remove, two-tap Clear trip; Print (print CSS isolates the planner), Download (.txt itinerary), Share (navigator.share -> clipboard fallback -> unavailable message). Focus trap + focus restore + scroll lock.
+
+
+4.8 Nav, FAQ, footer, toasts, theme, motion
+
+- Desktop hover dropdowns + click toggle; mobile panel (max-height 100dvh?78px, scrollable); Esc/outside-click close; aria-expanded/aria-haspopup maintained.
+- FAQ: 8 buttons (aria-expanded/aria-controls), smooth grid-rows accordion.
+- Footer columns route to scrollToRegion / browseCategory / wishlist / planner / FAQ.
+- Toasts: max 3, polite live region, auto-dismiss 2.6 s, dismiss button, safe-text injection.
+- Theme: theme.js pre-paint restore; toggleTheme/setTheme persist; follows OS until user picks; button icon + labels sync; no state reset on switch.
+- Motion: hero entrance, card lifts, modal/toast keyframes, marquee pause-on-hover; prefers-reduced-motion collapses animation and disables smooth scroll / lifts / counters.
+
+----------------------------------------------------------------------
+
+
+5. AUDIT - BUGS FOUND AND FIXED (WITH ROOT CAUSE + FILE)
+--------------------------------------------------------
+
+
+1. Wishlist key used filtered index (app.js) - slug|i vs real slug|realIdx; fixed.
+2. Invalid dark-mode nesting (styles.css) - @media inside :root; fixed to standard wrapping.
+3. Modal flex-button margins (styles.css) - .modal .map-btn margins broke .btn-row; scoped to container + zeroed inner buttons (incl. responsive overrides).
+4. Stale filter selects (app.js) - browseCategory bypassed controls; added syncDiscoverControls() + filter reset.
+5. Convoluted hidden-state gate (app.js) - simplified; state dropdown now includes hidden states.
+6. Search-clear unfocusable (index.html) - removed tabindex="-1".
+7. Wordmark not keyboard-operable (index.html) - added role/tabindex/keyboard + label.
+8. Dialog labelling (index.html) - dangling aria-labelledby="modalTitle"; itinerary modal had no role; fixed.
+9. Placeholder SEO (index.html) - example.com canonical, relative og:image; fixed to Netlify absolute URLs + og:url.
+10. Ultrawide header stretch (styles.css) - max-width:none; capped at 1280px centered.
+11. Cross-view wish/trip staleness (app.js) - only clicked button updated / full re-render lost focus; data-* targeted sync added.
+12. Unsafe storage parse (app.js) - added Array.isArray + string guards for both lists.
+13. Missing null guards (app.js) - region lookup, scrollToRegion, state/place-list renders; guarded.
+14. Missing empty states (app.js) - added for state filter + discover reset action.
+15. Weak rel on Maps links (app.js) - noopener -> noopener noreferrer.
+16. (This visit) stale index7.html URLs after rename (index.html) - canonical/og:url updated to /index.html.
+
+Data integrity: verified clean (no action needed). No secrets, no eval, no fake ratings/prices/distances; durations labeled Suggested/estimates.
+
+----------------------------------------------------------------------
+
+
+6. TESTS PERFORMED (COMMANDS + RESULTS)
+---------------------------------------
+
+
+- node --check app.js -> OK.
+- Temp functional suite travel_audit_test.cjs (16 assertions against real DATA): search trim/case, realIdx, hidden-simplification marker, 15 hidden / 41 visible places, gallery validity, Array guards, Set usage, debounce, fallback, data attrs, season matcher (3 cases) -> 16 passed, 0 failed.
+- Handler/ID cross-check audit_check.py: every onclick/onchange target defined (false positives only: event.stopPropagation, inline if); 0 missing element IDs.
+- Dataset parse: 36 states, 67 places, 0 duplicate slugs, 0 missing required fields, 0 missing image files.
+- CSS braces 616/616 balanced; dark-mode + modal-margin fixes confirmed present; Netlify URLs + a11y attributes confirmed in index.html.
+- No bundler/test runner in repo, so no build/lint suite to run. Not browser-verified (no harness here): live clicks, console errors, screen reader, Lighthouse, 320-1440px visual diffs still need a manual pass.
+
+----------------------------------------------------------------------
+
+
+7. RESPONSIVE, ACCESSIBILITY, SEO, PERFORMANCE, SECURITY STATUS
+---------------------------------------------------------------
+
+
+- Responsive: breakpoints 360/420/640/760/900/1060px; grids collapse (4->2->1 col), header wraps with full-width search on mobile, modals fit viewport (calc(100vh?...)), drawers scroll (100dvh?78px), overflow-x: clip, sized images. Static review clean; device testing still recommended.
+- Accessibility: semantic landmarks, skip link, labeled controls, visible gold focus rings, modal focus trap + restore, Esc handling, live regions for counts/toasts, reduced-motion support, decorative assets hidden (aria-hidden marquee/motif, empty alt-equivalent handling via captions). No gratuitous ARIA.
+- SEO: title, description, canonical, og:/twitter: tags, lang="en", UTF-8, viewport, favicon, WebSite + FAQPage JSON-LD matching visible content. Single-page app: only this page is indexable (no per-destination URLs) - not claimed otherwise.
+- Performance: local WebP + lazy/async + dimensions (no CLS), CSS hero (no blocking hero <img>), debounced search, max-24 discover render, content-visibility on heavy sections, no frameworks. Watch item: 1920px Taj JPG hero background is heavy on mobile.
+- Security/privacy: no keys/tokens in client code; no eval; search string escaped; external links use noopener noreferrer; only non-sensitive IDs in localStorage (never secrets). No dependency audit applicable (no package.json).
+
+----------------------------------------------------------------------
+
+
+8. HOW TO RUN & DEPLOY
+----------------------
+
+
+`powershell
+
+RUN LOCALLY (FROM THIS FOLDER)
+==============================
+
+python -m http.server 8000
+
+OPEN HTTP://LOCALHOST:8000/INDEX.HTML
+=====================================
+
+
+(FILE:// ALSO WORKS; A LOCAL SERVER IS MORE RELIABLE FOR FONTS/LINKS)
+=====================================================================
+
+`
+
+Netlify: publish directory = this folder, no build command. Entry is now index.html (clean root URL - no /index7.html suffix needed). Keep app.js, styles.css, theme.js, images/, data/ beside it.
+
+----------------------------------------------------------------------
+
+
+9. REMAINING ISSUES & RECOMMENDED NEXT STEPS
+--------------------------------------------
+
+
+1. README still references index.html (title, run steps, file list, canonical example) - update to index.html.
+2. Manual browser pass still owed: filters + reset, wishlist/trip persistence incl. corrupted storage, modals (Esc/overlay/Tab), theme persist, 320/375/425/768/1024/1440px, console-error + broken-link sweep.
+3. Consider a smaller mobile hero (taj-mahal-hero.webp + image-set()); current 1920px JPG is the heaviest asset.
+4. 13 images carry IMAGE_DOWNLOAD_REPORT "REVIEW" flags - glance and swap any misrepresenting photo.
+5. Optional: index.html in canonical/OG is fine, but root https://travel-bharattt.netlify.app/ canonical is cleaner if Netlify serves it without suffix.
+6. Do not add backend/auth/paid APIs - out of scope for this frontend-only guide.
